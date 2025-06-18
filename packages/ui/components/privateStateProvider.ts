@@ -11,43 +11,51 @@ export class WrappedPrivateStateProvider {
     private readonly logger: Logger,
   ) {}
 
-  set(key: string, state: unknown): Promise<void> {
+  set(key: string, _state: unknown): Promise<void> {
     this.logger.trace(`Setting private state for key: ${key}`);
-    return this.privateDataProvider.set(key, state);
+    // @ts-ignore
+    return this.privateDataProvider.set(key, _state);
   }
 
   get(key: string): Promise<unknown | null> {
     this.logger.trace(`Getting private state for key: ${key}`);
+    // @ts-ignore
     return this.privateDataProvider.get(key);
   }
 
   remove(key: string): Promise<void> {
     this.logger.trace(`Removing private state for key: ${key}`);
+    // @ts-ignore
     return this.privateDataProvider.remove(key);
   }
 
   clear(): Promise<void> {
     this.logger.trace('Clearing private state');
+    // @ts-ignore
     return this.privateDataProvider.clear();
   }
 
-  setSigningKey(key: string, signingKey: SigningKey): Promise<void> {
+  setSigningKey(key: string, _signingKey: SigningKey): Promise<void> {
     this.logger.trace(`Setting signing key for key: ${key}`);
-    return this.privateDataProvider.setSigningKey(key, signingKey);
+    // @ts-ignore
+    return this.privateDataProvider.setSigningKey(key, _signingKey);
   }
 
   getSigningKey(key: string): Promise<SigningKey | null> {
     this.logger.trace(`Getting signing key for key: ${key}`);
+    // @ts-ignore
     return this.privateDataProvider.getSigningKey(key);
   }
 
   removeSigningKey(key: string): Promise<void> {
     this.logger.trace(`Removing signing key for key: ${key}`);
+    // @ts-ignore
     return this.privateDataProvider.removeSigningKey(key);
   }
 
   clearSigningKeys(): Promise<void> {
     this.logger.trace('Clearing signing keys');
+    // @ts-ignore
     return this.privateDataProvider.clearSigningKeys();
   }
 }

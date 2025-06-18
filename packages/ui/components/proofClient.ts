@@ -4,24 +4,22 @@ import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client
 
 export const proofClient = <K extends string>(
   url: string,
-  callback: (status: 'proveTxStarted' | 'proveTxDone') => void,
 ): ProofProvider<K> => {
   const httpClientProvider = httpClientProofProvider(url.trim());
   return {
-    proveTx(tx: UnprovenTransaction, proveTxConfig?: ProveTxConfig<K>): Promise<UnbalancedTransaction> {
-      // eslint-disable-next-line n/no-callback-literal
-      callback('proveTxStarted');
-      return httpClientProvider.proveTx(tx, proveTxConfig).finally(() => {
-        // eslint-disable-next-line n/no-callback-literal
-        callback('proveTxDone');
-      });
+    proveTx(
+      tx: UnprovenTransaction,
+      proveTxConfig?: ProveTxConfig<K>,
+    ): Promise<UnbalancedTransaction> {
+      return httpClientProvider.proveTx(tx, proveTxConfig);
     },
   };
 };
 
 export const noopProofClient = <K extends string>(): ProofProvider<K> => {
   return {
-    proveTx(tx: UnprovenTransaction, proveTxConfig?: ProveTxConfig<K>): Promise<UnbalancedTransaction> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    proveTx(_tx: UnprovenTransaction, _proveTxConfig?: ProveTxConfig<K>): Promise<UnbalancedTransaction> {
       return Promise.reject(new Error('Proof server not available'));
     },
   };

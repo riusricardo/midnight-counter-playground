@@ -14,6 +14,7 @@
     "counter-cli-remote": "yarn --workspace=@midnight-ntwrk/counter-cli run start-testnet-remote",
     "counter-cli-remote-ps": "yarn --workspace=@midnight-ntwrk/counter-cli run start-testnet-remote-ps",
     "test-against-testnet": "yarn --workspace=@midnight-ntwrk/counter-cli run test-against-testnet",
+    "start": "yarn --cwd apps/web run start",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "lint": "turbo run lint"
   },
@@ -42,12 +43,13 @@
     "@types/node": "^22.15.29",
     "@types/semver": "^7.7.0",
     "@types/ws": "^8.18.1",
-    "@typescript-eslint/eslint-plugin": "^8.33.1",
-    "@typescript-eslint/parser": "^8.33.1",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
+    "rxjs": "^7.8.1",
     "testcontainers": "^11.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
@@ -56,10 +58,12 @@
   },
   "devDependencies": {
     "eslint": "^9.28.0",
+    "http-server": "^14.1.1",
     "prettier": "^3.2.5",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vite-plugin-wasm": "^3.4.1"
   },
   "packageManager": "yarn@1.22.22"
 }

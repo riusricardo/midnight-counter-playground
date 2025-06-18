@@ -31,18 +31,16 @@ export enum MidnightWalletErrorType {
 
 export const WalletWidget = (
   connect: () => Promise<void>,
-  setOpenWallet: (isOpen: boolean) => void,
   shake: boolean,
   walletIsOpen: boolean,
   isChromeBrowser: boolean,
   proofServerIsOnline: boolean,
   isConnecting: boolean,
-  logger: Logger,
+  _logger: Logger,
   isFloatingOpen: boolean,
-  setOpenFloating: (isOpen: boolean) => void,
+  address?: Address,
   walletError?: MidnightWalletErrorType,
   snackBarText?: string,
-  address?: Address,
 ): React.ReactNode => {
   const box = (content: React.ReactNode): React.ReactNode => {
     return (
@@ -102,18 +100,14 @@ export const WalletWidget = (
       );
   }
 
-  const handleClose: () => void = () => {
-    setOpenWallet(false);
-  };
-
-  const handleClick: () => void = () => {
-    setOpenWallet(true);
-  };
-
   const connectOrShowWallet: () => Promise<void> = async () => {
-    if (error ?? !!address) {
-      handleClick();
-    } else await connect();
+    if (error) {
+      // handleClick();
+    } else if (address) {
+      // handleClick();
+    } else {
+      await connect();
+    }
   };
 
   const icon = isConnecting ? <CircularProgress size={10} /> : error ? <ErrorIcon /> : <CheckBoxIcon />;
@@ -182,7 +176,7 @@ export const WalletWidget = (
               <Button
                 startIcon={<CloseIcon />}
                 onClick={() => {
-                  setOpenFloating(false);
+                  // setOpenFloating(false);
                 }}
                 sx={{
                   position: 'absolute',
@@ -199,7 +193,7 @@ export const WalletWidget = (
 
       <Dialog
         open={walletIsOpen}
-        onClose={handleClose}
+        onClose={() => {}}
         aria-labelledby="wallet-dialog-title"
         aria-describedby="wallet-dialog-description"
         PaperProps={{
@@ -237,7 +231,7 @@ export const WalletWidget = (
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Close</Button>
+          <Button onClick={() => {}}>Close</Button>
         </DialogActions>
       </Dialog>
     </div>,

@@ -52,6 +52,7 @@ const join = async (providers: CounterProviders, rli: Interface): Promise<Deploy
 
 const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract | null> => {
   while (true) {
+    // while loop for CLI menu
     const choice = await rli.question(DEPLOY_OR_JOIN_QUESTION);
     switch (choice) {
       case '1':
@@ -73,6 +74,7 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
     return;
   }
   while (true) {
+    // while loop for CLI menu
     const choice = await rli.question(MAIN_LOOP_QUESTION);
     switch (choice) {
       case '1':
@@ -107,6 +109,7 @@ const buildWallet = async (config: Config, rli: Interface): Promise<(Wallet & Re
     return await api.buildWalletAndWaitForFunds(config, GENESIS_MINT_WALLET_SEED, '');
   }
   while (true) {
+    // while loop for CLI menu
     const choice = await rli.question(WALLET_LOOP_QUESTION);
     switch (choice) {
       case '1':

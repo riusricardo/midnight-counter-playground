@@ -74,7 +74,7 @@ export const RuntimeConfigurationProvider: React.FC<RuntimeConfigurationProvider
 
   return (
     <RuntimeConfigurationContext.Provider value={runtimeConfig}>
-      {runtimeConfig ? children : <div>Loading configuration...</div>}
+      {runtimeConfig ? children : <div>Loading configuration...1,2,3</div>}
     </RuntimeConfigurationContext.Provider>
   );
 };

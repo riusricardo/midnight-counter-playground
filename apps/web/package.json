@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "http-server --port 8080 ./dist --proxy 'http://127.0.0.1:8080?'",
     "dev": "vite --clearScreen false",
     "build": "tsc && vite build",
     "preview": "vite preview",

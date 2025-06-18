@@ -25,9 +25,13 @@ import { WrappedPublicDataProvider } from './publicDataProvider';
 import { WrappedPrivateStateProvider } from './privateStateProvider';
 import { CachedFetchZkConfigProvider } from './zkConfigProvider';
 
+// Replace isChromeBrowser and window/fetch usages with safe checks for build/SSR
 function isChromeBrowser(): boolean {
-  const userAgent = navigator.userAgent.toLowerCase();
-  return userAgent.includes('chrome') && !userAgent.includes('edge') && !userAgent.includes('opr');
+  if (typeof navigator !== 'undefined') {
+    const userAgent = navigator.userAgent.toLowerCase();
+    return userAgent.includes('chrome') && !userAgent.includes('edge') && !userAgent.includes('opr');
+  }
+  return false;
 }
 
 interface MidnightWalletState {
@@ -112,56 +116,35 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
   const localState = useLocalState() as ReturnType<typeof useLocalState>;
   const [snackBarText, setSnackBarText] = useState<string | undefined>(undefined);
   const [walletAPI, setWalletAPI] = useState<WalletAPI | undefined>(undefined);
-  const [floatingOpen, setFloatingOpen] = React.useState(true);
-
-  const onMintTransaction = (success: boolean): void => {
-    if (success) {
-      setSnackBarText('Minting tBTC was successful');
-    } else {
-      setSnackBarText('Minting tBTC failed');
-    }
-    setTimeout(() => {
-      setSnackBarText(undefined);
-    }, 3000);
-  };
+  const [floatingOpen] = React.useState(true);
 
   const privateStateProvider = useMemo(
     () =>
       new WrappedPrivateStateProvider(
         levelPrivateStateProvider({
-          privateStateStoreName: 'shop-private-state',
+          privateStateStoreName: 'counter-private-state',
         }),
         logger,
       ),
     [logger],
   );
 
-  const providerCallback: (action: ProviderCallbackAction) => void = (action: ProviderCallbackAction): void => {
-    if (action === 'proveTxStarted') {
-      setSnackBarText('Proving transaction...');
-    } else if (action === 'proveTxDone') {
-      setSnackBarText(undefined);
-    } else if (action === 'balanceTxStarted') {
-      setSnackBarText('Signing the transaction with Midnight Lace wallet...');
-    } else if (action === 'downloadProverDone') {
-      setSnackBarText(undefined);
-    } else if (action === 'downloadProverStarted') {
-      setSnackBarText('Downloading prover key...');
-    } else if (action === 'balanceTxDone') {
-      setSnackBarText(undefined);
-    } else if (action === 'submitTxStarted') {
-      setSnackBarText('Submitting transaction...');
-    } else if (action === 'submitTxDone') {
-      setSnackBarText(undefined);
-    } else if (action === 'watchForTxDataStarted') {
-      setSnackBarText('Waiting for transaction finalization on blockchain...');
-    } else if (action === 'watchForTxDataDone') {
-      setSnackBarText(undefined);
-    }
+  const providerCallback: (action: ProviderCallbackAction) => void = (_action: ProviderCallbackAction): void => {
+    // no-op
   };
 
+  // Provide a no-op fallback for zkConfigProvider
+  const emptyZkConfigProvider: ZKConfigProvider<CounterCircuits> = {
+    getZKIR: async () => { throw new Error('Not implemented'); },
+    getProverKey: async () => { throw new Error('Not implemented'); },
+    getVerifierKey: async () => { throw new Error('Not implemented'); },
+    getVerifierKeys: async () => { throw new Error('Not implemented'); },
+    get: async () => { throw new Error('Not implemented'); },
+  };
   const zkConfigProvider = useMemo(
-    () => new CachedFetchZkConfigProvider<CounterCircuits>(window.location.origin, fetch.bind(window), providerCallback),
+    () => (typeof window !== 'undefined' && typeof fetch !== 'undefined')
+      ? new CachedFetchZkConfigProvider<CounterCircuits>(window.location.origin, fetch.bind(window), providerCallback)
+      : emptyZkConfigProvider,
     [],
   );
 
@@ -186,7 +169,7 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
 
   const proofProvider = useMemo(() => {
     if (walletAPI) {
-      return proofClient(walletAPI.uris.proverServerUri, providerCallback);
+      return proofClient(walletAPI.uris.proverServerUri);
     } else {
       return noopProofClient();
     }
@@ -215,7 +198,7 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
       return {
         coinPublicKey: '',
         encryptionPublicKey: '',
-        balanceTx(tx: UnbalancedTransaction, newCoins: CoinInfo[]): Promise<BalancedTransaction> {
+        balanceTx(_tx: UnbalancedTransaction, _newCoins: CoinInfo[]): Promise<BalancedTransaction> {
           return Promise.reject(new Error('readonly'));
         },
       };
@@ -234,7 +217,7 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
       };
     } else {
       return {
-        submitTx(tx: BalancedTransaction): Promise<TransactionId> {
+        submitTx(_tx: BalancedTransaction): Promise<TransactionId> {
           return Promise.reject(new Error('readonly'));
         },
       };
@@ -266,6 +249,10 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
   });
 
   async function checkProofServerStatus(proverServerUri: string): Promise<void> {
+    if (typeof fetch === 'undefined') {
+      setProofServerIsOnline(false);
+      return;
+    }
     try {
       const response = await fetch(proverServerUri);
       if (!response.ok) {
@@ -338,23 +325,20 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
       address,
       widget: WalletWidget(
         () => connect(true), // manual connect
-        setOpenWallet,
         isRotate,
         openWallet,
         isChromeBrowser(),
         proofServerIsOnline,
         isConnecting,
         logger,
-        onMintTransaction,
         floatingOpen,
-        setFloatingOpen,
-        walletError,
-        snackBarText,
         address,
+        walletError,
+        snackBarText
       ),
       shake,
     }));
-  }, [isConnecting, walletError, address, openWallet, isRotate, proofServerIsOnline, snackBarText, floatingOpen]);
+  }, [isConnecting, walletError, address, openWallet, isRotate, proofServerIsOnline, snackBarText]);
 
   useEffect(() => {
     if (!walletState.isConnected && !isConnecting && !walletError && localState.isLaceAutoConnect()) {

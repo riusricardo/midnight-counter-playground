@@ -18,14 +18,21 @@
     "@mui/icons-material": "^7.1.1",
     "@mui/material": "^7.1.1",
     "react": "^18.2.0",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@originjs/vite-plugin-commonjs": "1.0.3",
+    "@rollup/plugin-commonjs": "^28.0.1",
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
-    "eslint": "^8.57.0",
+    "@types/react-dnd": "^2.0.36",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
+    "eslint": "^9.28.0",
     "typescript": "5.5.4"
   }
 }

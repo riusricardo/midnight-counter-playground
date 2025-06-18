@@ -10,7 +10,13 @@ export const connectToWallet = (logger: Logger): Promise<{ wallet: DAppConnector
   return firstValueFrom(
     fnPipe(
       interval(100),
-      map(() => (typeof window !== 'undefined' ? window.midnight?.mnLace : undefined)),
+      map(() => {
+        if (typeof globalThis !== 'undefined' && typeof globalThis.window !== 'undefined') {
+          // @ts-ignore
+          return globalThis.window.midnight?.mnLace;
+        }
+        return undefined;
+      }),
       tap((connectorAPI) => {
         logger.info(connectorAPI, 'Check for wallet connector API');
       }),
