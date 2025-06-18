@@ -19,5 +19,6 @@
   },
   "dependencies": {
     "@midnight-ntwrk/counter-contract": "*"
-  }
+  },
+  "types": "dist/index.d.ts"
 }
