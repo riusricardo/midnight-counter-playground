@@ -20,6 +20,10 @@
     "test-api": "docker compose -f standalone.yml pull && DEBUG='testcontainers' vitest run"
   },
 
+  "dependencies": {
+    "@midnight-ntwrk/counter-contract": "*"
+  },
+
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
