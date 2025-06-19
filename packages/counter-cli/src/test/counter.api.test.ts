@@ -16,9 +16,15 @@
 import { type Resource } from '@midnight-ntwrk/wallet';
 import { type Wallet } from '@midnight-ntwrk/wallet-api';
 import path from 'path';
-import * as api from '../api';
-import { type CounterProviders } from '../common-types';
-import { currentDir } from '../config';
+import {
+  setLogger,
+  configureProviders,
+  deploy,
+  displayCounterValue,
+  increment,
+  CounterProviders,
+  currentDir,
+} from '@repo/counter-api';
 import { createLogger } from '../logger-utils';
 import { TestEnvironment } from './commons';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -33,11 +39,11 @@ describe('API', () => {
 
   beforeAll(
     async () => {
-      api.setLogger(logger);
+      setLogger(logger);
       testEnvironment = new TestEnvironment(logger);
       const testConfiguration = await testEnvironment.start();
       wallet = await testEnvironment.getWallet();
-      providers = await api.configureProviders(wallet, testConfiguration.dappConfig);
+      providers = await configureProviders(wallet, testConfiguration.dappConfig);
     },
     1000 * 60 * 45,
   );
@@ -48,18 +54,18 @@ describe('API', () => {
   });
 
   it('should deploy the contract and increment the counter [@slow]', async () => {
-    const counterContract = await api.deploy(providers, { privateCounter: 0 });
+    const counterContract = await deploy(providers, { privateCounter: 0 });
     expect(counterContract).not.toBeNull();
 
-    const counter = await api.displayCounterValue(providers, counterContract);
+    const counter = await displayCounterValue(providers, counterContract);
     expect(counter.counterValue).toEqual(BigInt(0));
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    const response = await api.increment(counterContract);
+    const response = await increment(counterContract);
     expect(response.txHash).toMatch(/[0-9a-f]{64}/);
     expect(response.blockHeight).toBeGreaterThan(BigInt(0));
 
-    const counterAfter = await api.displayCounterValue(providers, counterContract);
+    const counterAfter = await displayCounterValue(providers, counterContract);
     expect(counterAfter.counterValue).toEqual(BigInt(1));
     expect(counterAfter.contractAddress).toEqual(counter.contractAddress);
   });

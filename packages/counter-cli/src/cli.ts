@@ -19,9 +19,22 @@ import { stdin as input, stdout as output } from 'node:process';
 import { createInterface, type Interface } from 'node:readline/promises';
 import { type Logger } from 'pino';
 import { type StartedDockerComposeEnvironment, type DockerComposeEnvironment } from 'testcontainers';
-import { type CounterProviders, type DeployedCounterContract } from './common-types';
-import { type Config, StandaloneConfig } from './config';
-import * as api from './api';
+import { 
+  type CounterProviders, 
+  type DeployedCounterContract,
+  type Config, 
+  StandaloneConfig,
+  // Import all API functions
+  setLogger,
+  joinContract,
+  deploy,
+  increment,
+  displayCounterValue,
+  buildWalletAndWaitForFunds,
+  buildFreshWallet,
+  configureProviders,
+  saveState
+} from '@repo/counter-api';
 
 let logger: Logger;
 
@@ -47,7 +60,7 @@ Which would you like to do? `;
 
 const join = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract> => {
   const contractAddress = await rli.question('What is the contract address (in hex)? ');
-  return await api.joinContract(providers, contractAddress);
+  return await joinContract(providers, contractAddress);
 };
 
 const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract | null> => {
@@ -56,7 +69,7 @@ const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promis
     const choice = await rli.question(DEPLOY_OR_JOIN_QUESTION);
     switch (choice) {
       case '1':
-        return await api.deploy(providers, { privateCounter: 0 });
+        return await deploy(providers, { privateCounter: 0 });
       case '2':
         return await join(providers, rli);
       case '3':
@@ -78,10 +91,10 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
     const choice = await rli.question(MAIN_LOOP_QUESTION);
     switch (choice) {
       case '1':
-        await api.increment(counterContract);
+        await increment(counterContract);
         break;
       case '2':
-        await api.displayCounterValue(providers, counterContract);
+        await displayCounterValue(providers, counterContract);
         break;
       case '3':
         logger.info('Exiting...');
@@ -94,7 +107,7 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
 
 const buildWalletFromSeed = async (config: Config, rli: Interface): Promise<Wallet & Resource> => {
   const seed = await rli.question('Enter your wallet seed: ');
-  return await api.buildWalletAndWaitForFunds(config, seed, '');
+  return await buildWalletAndWaitForFunds(config, seed, '');
 };
 
 const WALLET_LOOP_QUESTION = `
@@ -106,14 +119,14 @@ Which would you like to do? `;
 
 const buildWallet = async (config: Config, rli: Interface): Promise<(Wallet & Resource) | null> => {
   if (config instanceof StandaloneConfig) {
-    return await api.buildWalletAndWaitForFunds(config, GENESIS_MINT_WALLET_SEED, '');
+    return await buildWalletAndWaitForFunds(config, GENESIS_MINT_WALLET_SEED, '');
   }
   while (true) {
     // while loop for CLI menu
     const choice = await rli.question(WALLET_LOOP_QUESTION);
     switch (choice) {
       case '1':
-        return await api.buildFreshWallet(config);
+        return await buildFreshWallet(config);
       case '2':
         return await buildWalletFromSeed(config, rli);
       case '3':
@@ -136,7 +149,7 @@ const mapContainerPort = (env: StartedDockerComposeEnvironment, url: string, con
 
 export const run = async (config: Config, _logger: Logger, dockerEnv?: DockerComposeEnvironment): Promise<void> => {
   logger = _logger;
-  api.setLogger(_logger);
+  setLogger(_logger);
   const rli = createInterface({ input, output, terminal: true });
   let env;
   if (dockerEnv !== undefined) {
@@ -152,7 +165,7 @@ export const run = async (config: Config, _logger: Logger, dockerEnv?: DockerCom
   const wallet = await buildWallet(config, rli);
   try {
     if (wallet !== null) {
-      const providers = await api.configureProviders(wallet, config);
+      const providers = await configureProviders(wallet, config);
       await mainLoop(providers, rli);
     }
   } catch (e) {

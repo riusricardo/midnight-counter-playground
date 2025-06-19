@@ -15,7 +15,7 @@
 
 import { createLogger } from './logger-utils.js';
 import { run } from './cli.js';
-import { TestnetLocalConfig } from './config.js';
+import { TestnetLocalConfig } from '@repo/counter-api';
 
 const config = new TestnetLocalConfig();
 const logger = await createLogger(config.logDir);

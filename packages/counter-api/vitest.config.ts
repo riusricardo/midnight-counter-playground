@@ -13,16 +13,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createLogger } from './logger-utils.js';
-import { run } from './cli.js';
-import { currentDir, TestnetRemoteConfig } from '@repo/counter-api';
-import { DockerComposeEnvironment, Wait } from 'testcontainers';
-import path from 'node:path';
+import { defineConfig } from 'vitest/config';
 
-const config = new TestnetRemoteConfig();
-const dockerEnv = new DockerComposeEnvironment(path.resolve(currentDir, '..'), 'proof-server-testnet.yml').withWaitStrategy(
-  'proof-server',
-  Wait.forLogMessage('Actix runtime found; starting in Actix runtime', 1),
-);
-const logger = await createLogger(config.logDir);
-await run(config, logger, dockerEnv);
+export default defineConfig({
+  mode: 'node',
+  test: {
+    testTimeout: 1000 * 60 * 45,
+    deps: {
+      interopDefault: true,
+    },
+    globals: true,
+    environment: 'node',
+    include: ['**/*.test.ts'],
+    exclude: ['node_modules'],
+    root: '.',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+    },
+    reporters: ['default', ['junit', { outputFile: 'reports/report.xml' }]],
+  },
+  resolve: {
+    extensions: ['.ts', '.js'],
+    conditions: ['import', 'node', 'default'],
+  },
+});

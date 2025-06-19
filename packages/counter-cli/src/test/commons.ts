@@ -13,7 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Config, StandaloneConfig, currentDir, TestnetRemoteConfig } from '../config';
+import {
+  type Config,
+  StandaloneConfig,
+  currentDir,
+  TestnetRemoteConfig,
+  buildWalletAndWaitForFunds,
+  saveState,
+} from '@repo/counter-api';
 import {
   DockerComposeEnvironment,
   GenericContainer,
@@ -22,7 +29,6 @@ import {
   Wait,
 } from 'testcontainers';
 import path from 'path';
-import * as api from '../api';
 import * as Rx from 'rxjs';
 import { nativeToken } from '@midnight-ntwrk/ledger';
 import type { Logger } from 'pino';
@@ -176,7 +182,7 @@ export class TestEnvironment {
 
   getWallet = async () => {
     this.logger.info('Setting up wallet');
-    this.wallet = await api.buildWalletAndWaitForFunds(
+    this.wallet = await buildWalletAndWaitForFunds(
       this.testConfig.dappConfig,
       this.testConfig.seed,
       this.testConfig.cacheFileName,
@@ -189,7 +195,7 @@ export class TestEnvironment {
 
   saveWalletCache = async () => {
     if (this.wallet !== undefined) {
-      await api.saveState(this.wallet, this.testConfig.cacheFileName);
+      await saveState(this.wallet, this.testConfig.cacheFileName);
     }
   };
 }
