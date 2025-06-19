@@ -11,6 +11,10 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   clean: true,
+  // Mark dependencies as external
+  external: [
+    "@midnight-ntwrk/counter-contract"
+  ],
   // Use noExternal to inline path-resolver module
   noExternal: ["./src/path-resolver.ts"]
 });
