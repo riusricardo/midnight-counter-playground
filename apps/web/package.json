@@ -1,19 +1,15 @@
 {
   "name": "@repo/web-app",
-  "private": true,
   "version": "0.0.1",
+  "private": true,
   "type": "module",
-  "scripts": {
-    "start": "http-server --port 8080 ./dist --proxy 'http://127.0.0.1:8080?'",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "lint": "eslint \"src/**/*.ts\""
-  },
+
   "dependencies": {
     "@repo/ui": "*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
+
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
@@ -21,5 +17,12 @@
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.0.0",
     "eslint-plugin-react": "^7.37.5"
+  },
+
+  "scripts": {
+    "start": "http-server --port 8080 ./dist --proxy 'http://127.0.0.1:8080?'",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint \"src/**/*.ts\""
   }
 }

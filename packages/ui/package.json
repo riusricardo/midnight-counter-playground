@@ -1,14 +1,17 @@
 {
   "name": "@repo/ui",
   "version": "0.0.1",
+  "license": "MIT",
+
   "exports": {
     ".": "./index.ts",
     "./utils": "./utils/index.ts"
   },
-  "license": "MIT",
+
   "scripts": {
     "lint": "eslint \"**/*.ts\""
   },
+
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -20,6 +23,7 @@
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0"
   },
+
   "devDependencies": {
     "@originjs/vite-plugin-commonjs": "1.0.3",
     "@rollup/plugin-commonjs": "^28.0.1",

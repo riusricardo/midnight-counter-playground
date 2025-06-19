@@ -4,9 +4,11 @@
   "license": "Apache-2.0",
   "private": true,
   "type": "module",
+
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "./dist/index.d.ts",
+
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -15,12 +17,13 @@
       "default": "./dist/index.js"
     }
   },
+
   "scripts": {
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/counter.compact ./dist",
     "compact": "compactc src/counter.compact src/managed/counter",
+    "lint": "eslint src",
     "test": "vitest run",
     "test:compile": "npm run compact && vitest run",
-    "build": "rm -rf dist && tsc --project tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/counter.compact ./dist",
-    "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }
