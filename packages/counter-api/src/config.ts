@@ -15,7 +15,10 @@
 
 import path from 'node:path';
 import { NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-export const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
+import { getDirPath } from './path-resolver';
+
+// Get current directory in a way that works in both ESM and CJS
+export const currentDir = getDirPath();
 
 export const contractConfig = {
   privateStateStoreName: 'counter-private-state',
