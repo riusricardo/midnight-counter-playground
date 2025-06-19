@@ -51,15 +51,6 @@ export const theme = createTheme({
         },
       },
     },
-    MuiSnackbarContent: {
-      styleOverrides: {
-        root: {
-          backgroundColor: 'cornsilk',
-          color: greenColor,
-          borderRadius: '8px',
-        },
-      },
-    },
     MuiAlert: {
       styleOverrides: {
         root: {

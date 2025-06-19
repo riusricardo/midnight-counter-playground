@@ -10,11 +10,11 @@ export class BrowserLocalState implements LocalState {
   }
 
   isLaceAutoConnect(): boolean {
-    return window.localStorage.getItem('brick_towers_midnight_lace_connect') === 'true';
+    return window.localStorage.getItem('counter_midnight_lace_connect') === 'true';
   }
 
   setLaceAutoConnect(value: boolean): void {
     this.logger.trace(`Setting lace auto connect to ${value}`);
-    window.localStorage.setItem('brick_towers_midnight_lace_connect', value.toString());
+    window.localStorage.setItem('counter_midnight_lace_connect', value.toString());
   }
 }

@@ -1,18 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export interface RuntimeConfiguration {
-  FIREBASE_API_KEY: string;
-  FIREBASE_AUTH_DOMAIN: string;
-  FIREBASE_PROJECT_ID: string;
-  FIREBASE_STORAGE_BUCKET: string;
-  FIREBASE_MESSAGING_SENDER_ID: string;
-  FIREBASE_APP_ID: string;
-  FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY: string;
-  FIREBASE_APPCHECK_RECAPTCHA_ENTERPRISE_SITE_KEY: string;
   LOGGING_LEVEL: string;
-  BRICK_TOWERS_TOKEN_ADDRESS: string;
-  BRICK_TOWERS_IDP_REGISTER_ADDRESS: string;
-  BRICK_TOWERS_SHOP_ADDRESS: string;
+  COUNTER_ADDRESS: string;
   NETWORK_ID: string;
   PUBLIC_URL: string;
   INDEXER_URI: string;
@@ -42,17 +32,7 @@ export const loadRuntimeConfiguration = async (): Promise<RuntimeConfiguration> 
   const value: Record<string, string> = await response.json();
 
   return {
-    FIREBASE_API_KEY: value.FIREBASE_API_KEY,
-    FIREBASE_AUTH_DOMAIN: value.FIREBASE_AUTH_DOMAIN,
-    FIREBASE_PROJECT_ID: value.FIREBASE_PROJECT_ID,
-    FIREBASE_STORAGE_BUCKET: value.FIREBASE_STORAGE_BUCKET,
-    FIREBASE_MESSAGING_SENDER_ID: value.FIREBASE_MESSAGING_SENDER_ID,
-    FIREBASE_APP_ID: value.FIREBASE_APP_ID,
-    FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY: value.FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY,
-    FIREBASE_APPCHECK_RECAPTCHA_ENTERPRISE_SITE_KEY: value.FIREBASE_APPCHECK_RECAPTCHA_ENTERPRISE_SITE_KEY,
-    BRICK_TOWERS_TOKEN_ADDRESS: value.BRICK_TOWERS_TOKEN_ADDRESS,
-    BRICK_TOWERS_IDP_REGISTER_ADDRESS: value.BRICK_TOWERS_IDP_REGISTER_ADDRESS,
-    BRICK_TOWERS_SHOP_ADDRESS: value.BRICK_TOWERS_SHOP_ADDRESS,
+    COUNTER_ADDRESS: value.COUNTER_ADDRESS,
     LOGGING_LEVEL: value.LOGGING_LEVEL,
     NETWORK_ID: value.NETWORK_ID,
     PUBLIC_URL: value.PUBLIC_URL,
@@ -74,7 +54,9 @@ export const RuntimeConfigurationProvider: React.FC<RuntimeConfigurationProvider
 
   return (
     <RuntimeConfigurationContext.Provider value={runtimeConfig}>
-      {runtimeConfig ? children : <div>Loading configuration...1,2,3</div>}
+      {runtimeConfig ? children : <div>Loading configuration...</div>}
     </RuntimeConfigurationContext.Provider>
   );
 };
+
+export default RuntimeConfigurationProvider;

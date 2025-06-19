@@ -10,11 +10,10 @@
   "scripts": {
     "compact": "turbo run compact",
     "build": "turbo run build",
-    "dev": "turbo run dev",
-    "counter-cli-remote": "yarn --workspace=@midnight-ntwrk/counter-cli run start-testnet-remote",
-    "counter-cli-remote-ps": "yarn --workspace=@midnight-ntwrk/counter-cli run start-testnet-remote-ps",
-    "test-against-testnet": "yarn --workspace=@midnight-ntwrk/counter-cli run test-against-testnet",
-    "start": "yarn --cwd apps/web run start",
+    "start": "turbo run start --filter=@repo/web-app",
+    "counter-cli-remote": "yarn --cwd packages/counter-cli run start-testnet-remote",
+    "counter-cli-remote-ps": "yarn --cwd packages/counter-cli run start-testnet-remote-ps",
+    "test-against-testnet": "yarn --cwd packages/counter-cli run test-against-testnet",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "lint": "turbo run lint"
   },

@@ -5,7 +5,7 @@ export const useLocalState = (): LocalState => {
   const context = useContext(LocalStateProviderContext);
 
   if (!context) {
-    throw new Error('A <GameLocalStateProvider /> is required.');
+    throw new Error('A <LocalStateProvider /> is required.');
   }
   return context;
 };
