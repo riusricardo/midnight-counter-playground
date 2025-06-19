@@ -18,7 +18,8 @@
     "build": {
       "dependsOn": ["^build", "compact", "typecheck"],
       "inputs": ["src/**/*.ts", "src/**/*.mts", "src/**/*.tsx", "!src/**/*.test.ts", "!tests/**/*.ts", "tsconfig.json", "tsconfig.build.json", ".env"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "cache": false
     },
     "lint": {
       "dependsOn": ["compact", "^build", "typecheck"],
