@@ -5,8 +5,6 @@ import wasm from 'vite-plugin-wasm';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import inject from '@rollup/plugin-inject';
 import stdLibBrowser from 'node-stdlib-browser';
-import path from 'path';
-const __dirname = new URL('.', import.meta.url).pathname;
 
 // https://vitejs.dev/config/
 export default defineConfig({

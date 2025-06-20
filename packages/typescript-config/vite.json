@@ -1,10 +1,10 @@
 {
   "extends": "./base.json",
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2022",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext"],
     "sourceMap": true,
     "resolveJsonModule": true,
     "noEmit": true,
