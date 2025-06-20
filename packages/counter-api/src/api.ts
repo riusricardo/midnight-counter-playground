@@ -46,11 +46,8 @@ import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-pri
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import * as env from './env.js';
-import { WalletBuilder, NetworkId } from '@midnight-ntwrk/wallet';
-
-// If @midnight-ntwrk/wallet does not export Wallet/Resource types, fallback to 'any'.
-type Wallet = any;
-type Resource = any;
+import { WalletBuilder, type Resource } from '@midnight-ntwrk/wallet';
+import type { Wallet } from '@midnight-ntwrk/wallet-api';
 
 let logger: Logger;
 

@@ -22,7 +22,7 @@ export const currentDir = getDirPath();
 
 export const contractConfig = {
   privateStateStoreName: 'counter-private-state',
-  zkConfigPath: path.resolve(currentDir, '..', '..', 'contract', 'src', 'managed', 'counter'),
+  zkConfigPath: path.resolve(currentDir, '..', 'counter-contract', 'src', 'managed', 'counter'),
 };
 
 export interface Config {

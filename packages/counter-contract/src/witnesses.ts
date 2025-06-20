@@ -15,7 +15,7 @@
 
 // This is how we type an empty object.
 export type CounterPrivateState = {
-  privateCounter: number;
+  value: number;
 };
 
 export const witnesses = {};

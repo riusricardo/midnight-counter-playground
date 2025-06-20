@@ -5,7 +5,8 @@ import wasm from 'vite-plugin-wasm';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import inject from '@rollup/plugin-inject';
 import stdLibBrowser from 'node-stdlib-browser';
-
+import path from 'path';
+const __dirname = new URL('.', import.meta.url).pathname;
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -71,6 +72,8 @@ export default defineConfig({
       '@repo/counter-api/dist/env': '@repo/counter-api/src/env-browser.ts',
       '@repo/counter-api/dist/env-node': '@repo/counter-api/src/env-browser.ts',
       // fs/promises is intentionally not polyfilled for browser
+      // Shim for isomorphic-ws/browser.js to provide named WebSocket export
+      'isomorphic-ws/browser.js': path.resolve(__dirname, '../../packages/counter-api/src/ws-shim.js'),
     },
   },
   define: {

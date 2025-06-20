@@ -60,7 +60,7 @@ describe('API', () => {
   });
 
   it('should deploy the contract and increment the counter [@slow]', async () => {
-    const counterContract = await deploy(providers, { privateCounter: 0 });
+    const counterContract = await deploy(providers, { value: 0 });
     expect(counterContract).not.toBeNull();
 
     const counter = await displayCounterValue(providers, counterContract);
