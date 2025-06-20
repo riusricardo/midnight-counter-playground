@@ -46,6 +46,11 @@ import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-pri
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import * as env from './env.js';
+import { WalletBuilder, NetworkId } from '@midnight-ntwrk/wallet';
+
+// If @midnight-ntwrk/wallet does not export Wallet/Resource types, fallback to 'any'.
+type Wallet = any;
+type Resource = any;
 
 let logger: Logger;
 
@@ -109,10 +114,6 @@ export const displayCounterValue = async (
   }
   return { contractAddress, counterValue };
 };
-
-const WalletBuilder: any = {};
-type Wallet = any;
-type Resource = any;
 
 export const createWalletAndMidnightProvider = async (wallet: Wallet): Promise<WalletProvider & MidnightProvider> => {
   const state = await Rx.firstValueFrom(wallet.state());
@@ -209,7 +210,7 @@ export const buildWalletAndWaitForFunds = async (
         const stateObject = JSON.parse(serialized);
         if ((await isAnotherChain(wallet, Number(stateObject.offset))) === true) {
           logger.warn('The chain was reset, building wallet from scratch');
-          wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+          wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
           wallet.start();
         } else {
           const newState = await waitForSync(wallet);
@@ -222,7 +223,7 @@ export const buildWalletAndWaitForFunds = async (
             logger.info(`SyncProgress.lag.applyGap: ${typedState.syncProgress?.lag.applyGap}`);
             logger.info(`SyncProgress.lag.sourceGap: ${typedState.syncProgress?.lag.sourceGap}`);
             logger.warn('Wallet was not able to sync from restored state, building wallet from scratch');
-            wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+            wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
             wallet.start();
           }
         }
@@ -235,17 +236,17 @@ export const buildWalletAndWaitForFunds = async (
           logger.error(error);
         }
         logger.warn('Wallet was not able to restore using the stored state, building wallet from scratch');
-        wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+        wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
         wallet.start();
       }
     } else {
       logger.info('Wallet save file not found, building wallet from scratch');
-      wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+      wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
       wallet.start();
     }
   } else {
     logger.info('File path for save file not found, building wallet from scratch');
-    wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+    wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
     wallet.start();
   }
 

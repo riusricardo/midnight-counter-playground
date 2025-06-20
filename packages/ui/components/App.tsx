@@ -1,6 +1,4 @@
 import React from 'react';
-// import { DndProvider } from 'react-dnd';
-// import { HTML5Backend } from 'react-dnd-html5-backend';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider, Container, Box, Typography, Paper } from '@mui/material';
 import { theme } from '../config/theme.js';
@@ -51,8 +49,6 @@ const AppWithConfig: React.FC = () => {
     </LocalStateProvider>
   );
 };
-
-// CounterApplication component is imported from CounterComponent.tsx
 
 const App: React.FC = () => {
   return (
