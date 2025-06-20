@@ -1,22 +1,8 @@
 import React from 'react';
 import type { Address } from '@midnight-ntwrk/wallet-api';
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  keyframes,
-  Snackbar,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Dialog, keyframes, Snackbar, Typography } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import CloseIcon from '@mui/icons-material/Close';
 import { type Logger } from 'pino';
 
 export enum MidnightWalletErrorType {
@@ -101,13 +87,10 @@ export const WalletWidget = (
   }
 
   const connectOrShowWallet: () => Promise<void> = async () => {
-    if (error) {
-      // handleClick();
-    } else if (address) {
-      // handleClick();
-    } else {
+    if (!error && !address) {
       await connect();
     }
+    // Removed the dialog opening logic - no more unwanted information windows
   };
 
   const icon = isConnecting ? <CircularProgress size={10} /> : error ? <ErrorIcon /> : <CheckBoxIcon />;
@@ -162,7 +145,6 @@ export const WalletWidget = (
                 top: '30px',
                 right: 0,
                 mt: 1,
-                // transform: 'translateY(100%)',
                 backgroundColor: 'secondary.main',
                 color: 'cornsilk',
                 border: '1px solid cornsilk',
@@ -173,26 +155,14 @@ export const WalletWidget = (
                 zIndex: 2000,
               }}
             >
-              <Button
-                startIcon={<CloseIcon />}
-                onClick={() => {
-                  // setOpenFloating(false);
-                }}
-                sx={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  minWidth: 'auto',
-                  padding: 0,
-                }}
-              ></Button>
+              {/* Removed non-functional close button */}
             </Box>
           )}
         </Box>
       </Typography>
 
       <Dialog
-        open={walletIsOpen}
+        open={false} // Disabled the dialog - no more unwanted information windows
         onClose={() => {}}
         aria-labelledby="wallet-dialog-title"
         aria-describedby="wallet-dialog-description"
@@ -204,35 +174,7 @@ export const WalletWidget = (
           },
         }}
       >
-        <DialogTitle id="wallet-dialog-title">
-          <Typography variant="h1" color="cornsilk" data-testid="textprompt-dialog-title">
-            Wallet Information
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="wallet-dialog-description">
-            <Typography variant="body1" color="cornsilk">
-              Wallet: <span style={{ fontWeight: 'bold' }}>{address ? 'Connected' : 'Disconnected'}</span>
-            </Typography>
-            <Typography
-              variant="body1"
-              color="cornsilk"
-              sx={{
-                overflowWrap: 'break-word',
-                whiteSpace: 'normal',
-              }}
-            >
-              Address: <span style={{ fontWeight: 'bold' }}>{address ?? 'Unknown'}</span>
-            </Typography>
-            <Typography variant="body1" color="cornsilk">
-              Proof Server: <span style={{ fontWeight: 'bold' }}>{proofServerIsOnline ? 'Online' : 'Offline'}</span>
-            </Typography>
-            {error}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => {}}>Close</Button>
-        </DialogActions>
+        {/* Dialog content removed since dialog is disabled */}
       </Dialog>
     </div>,
   );

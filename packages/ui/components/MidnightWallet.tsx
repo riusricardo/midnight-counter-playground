@@ -111,7 +111,6 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
   const [address, setAddress] = React.useState<Address | undefined>(undefined);
   const [proofServerIsOnline, setProofServerIsOnline] = React.useState<boolean>(false);
   const config = useRuntimeConfiguration();
-  const [openWallet, setOpenWallet] = React.useState(false);
   const [isRotate, setRotate] = React.useState(false);
   const localState = useLocalState() as ReturnType<typeof useLocalState>;
   const [snackBarText, setSnackBarText] = useState<string | undefined>(undefined);
@@ -265,7 +264,7 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
     }
   }
 
-  async function connect(manual: boolean): Promise<void> {
+  async function connect(_manual: boolean): Promise<void> {
     localState.setLaceAutoConnect(true);
     setIsConnecting(true);
     let walletResult;
@@ -278,7 +277,7 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
     }
     if (!walletResult) {
       setIsConnecting(false);
-      if (manual) setOpenWallet(true);
+      // Removed setOpenWallet since dialog is disabled
       return;
     }
     await checkProofServerStatus(walletResult.uris.proverServerUri);
@@ -326,7 +325,7 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
       widget: WalletWidget(
         () => connect(true), // manual connect
         isRotate,
-        openWallet,
+        false, // openWallet - always false since dialog is disabled
         isChromeBrowser(),
         proofServerIsOnline,
         isConnecting,
@@ -334,11 +333,11 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
         floatingOpen,
         address,
         walletError,
-        snackBarText
+        snackBarText,
       ),
       shake,
     }));
-  }, [isConnecting, walletError, address, openWallet, isRotate, proofServerIsOnline, snackBarText]);
+  }, [isConnecting, walletError, address, isRotate, proofServerIsOnline, snackBarText]);
 
   useEffect(() => {
     if (!walletState.isConnected && !isConnecting && !walletError && localState.isLaceAutoConnect()) {

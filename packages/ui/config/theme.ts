@@ -1,6 +1,7 @@
 import { createTheme, alpha } from '@mui/material';
 
-const greenColor = '#4DB378';
+const primaryColor = '#1976d2';
+const secondaryColor = '#0f2730';
 
 export const theme = createTheme({
   typography: {
@@ -27,14 +28,14 @@ export const theme = createTheme({
   },
   palette: {
     primary: {
-      main: greenColor,
-      light: alpha(greenColor, 0.5),
-      dark: alpha(greenColor, 0.9),
+      main: primaryColor,
+      light: alpha(primaryColor, 0.5),
+      dark: alpha(primaryColor, 0.9),
     },
     secondary: {
-      main: '#0f2730',
-      light: alpha('#0f2730', 0.5),
-      dark: alpha('#0f2730', 0.9),
+      main: secondaryColor,
+      light: alpha(secondaryColor, 0.5),
+      dark: alpha(secondaryColor, 0.9),
     },
     error: {
       main: '#d32f2f',
