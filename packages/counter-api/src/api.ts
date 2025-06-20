@@ -47,9 +47,12 @@ import { type Config, contractConfig } from './config';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import * as fsAsync from 'node:fs/promises';
-import * as fs from 'node:fs';
 import { map, type Observable, retry } from 'rxjs';
+// Use environment abstraction instead of direct fs imports
+import { 
+  readFile, writeFile, fileExists, existsSync, createReadStream, 
+  createWriteStream, mkdir, type ReadStream, type WriteStream 
+} from './env';
 
 let logger: Logger;
 // Instead of setting globalThis.crypto which is read-only, we'll ensure crypto is available
@@ -200,10 +203,10 @@ export const buildWalletAndWaitForFunds = async (
   const directoryPath = process.env.SYNC_CACHE;
   let wallet: Wallet & Resource;
   if (directoryPath !== undefined) {
-    if (fs.existsSync(`${directoryPath}/${filename}`)) {
+    if (existsSync(`${directoryPath}/${filename}`)) {
       logger.info(`Attempting to restore state from ${directoryPath}/${filename}`);
       try {
-        const serializedStream = fs.createReadStream(`${directoryPath}/${filename}`, 'utf-8');
+        const serializedStream = createReadStream(`${directoryPath}/${filename}`);
         const serialized = await streamToString(serializedStream);
         serializedStream.on('finish', () => {
           serializedStream.close();
@@ -274,14 +277,18 @@ export const randomBytes = (length: number): Uint8Array => {
 export const buildFreshWallet = async (config: Config): Promise<Wallet & Resource> =>
   await buildWalletAndWaitForFunds(config, toHex(randomBytes(32)), '');
 
-export const configureProviders = async (wallet: Wallet & Resource, config: Config) => {
+export const configureProviders = async (
+  wallet: Wallet & Resource,
+  config: Config,
+  zkConfigProvider: any // should be typed to ZkConfigProvider if available
+) => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
     privateStateProvider: levelPrivateStateProvider<typeof CounterPrivateStateId>({
       privateStateStoreName: contractConfig.privateStateStoreName,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-    zkConfigProvider: new NodeZkConfigProvider<'increment'>(contractConfig.zkConfigPath),
+    zkConfigProvider,
     proofProvider: httpClientProofProvider(config.proofServer),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,
@@ -292,11 +299,11 @@ export function setLogger(_logger: Logger) {
   logger = _logger;
 }
 
-export const streamToString = async (stream: fs.ReadStream): Promise<string> => {
+export const streamToString = async (stream: ReadStream): Promise<string> => {
   const chunks: Buffer[] = [];
   return await new Promise((resolve, reject) => {
-    stream.on('data', (chunk) => chunks.push(typeof chunk === 'string' ? Buffer.from(chunk, 'utf8') : chunk));
-    stream.on('error', (err) => {
+    stream.on('data', (chunk: any) => chunks.push(typeof chunk === 'string' ? Buffer.from(chunk, 'utf8') : chunk));
+    stream.on('error', (err: Error) => {
       reject(err);
     });
     stream.on('end', () => {
@@ -323,16 +330,16 @@ export const saveState = async (wallet: Wallet, filename: string) => {
   if (directoryPath !== undefined) {
     logger.info(`Saving state in ${directoryPath}/${filename}`);
     try {
-      await fsAsync.mkdir(directoryPath, { recursive: true });
+      await mkdir(directoryPath, { recursive: true });
       const serializedState = await wallet.serializeState();
-      const writer = fs.createWriteStream(`${directoryPath}/${filename}`);
+      const writer = createWriteStream(`${directoryPath}/${filename}`);
       writer.write(serializedState);
 
       writer.on('finish', function () {
         logger.info(`File '${directoryPath}/${filename}' written successfully.`);
       });
 
-      writer.on('error', function (err) {
+      writer.on('error', function (err: Error) {
         logger.error(err);
       });
       writer.end();

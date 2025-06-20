@@ -2,33 +2,30 @@
   "name": "@repo/counter-api",
   "version": "0.0.1",
   "private": true,
-
-  "main": "./dist/index.js",
+  "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-
+  "browser": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "browser": "./dist/index.mjs"
     }
   },
-
   "scripts": {
     "build": "tsup",
     "test-api": "docker compose -f standalone.yml pull && DEBUG='testcontainers' vitest run"
   },
-
   "dependencies": {
     "@midnight-ntwrk/counter-contract": "*"
   },
-
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
-    "tsup": "^8.0.2",
     "@types/node": "^22.15.29",
-    "@types/ws": "^8.18.1"
+    "@types/ws": "^8.18.1",
+    "esbuild-plugin-alias": "^0.2.1",
+    "tsup": "^8.0.2"
   }
 }

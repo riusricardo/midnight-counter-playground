@@ -24,10 +24,12 @@ import {
   increment,
   CounterProviders,
   currentDir,
+  contractConfig,
 } from '@repo/counter-api';
 import { createLogger } from '../logger-utils';
 import { TestEnvironment } from './commons';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 
 const logDir = path.resolve(currentDir, '..', 'logs', 'tests', `${new Date().toISOString()}.log`);
 const logger = await createLogger(logDir);
@@ -43,7 +45,7 @@ describe('API', () => {
       testEnvironment = new TestEnvironment(logger);
       const testConfiguration = await testEnvironment.start();
       wallet = await testEnvironment.getWallet();
-      providers = await configureProviders(wallet, testConfiguration.dappConfig);
+      providers = await configureProviders(wallet, testConfiguration.dappConfig, new NodeZkConfigProvider<'increment'>(contractConfig.zkConfigPath));
     },
     1000 * 60 * 45,
   );

@@ -1,8 +1,11 @@
 import type { Logger } from 'pino';
-import type { DAppConnectorAPI, DAppConnectorWalletAPI, ServiceUriConfig } from '@midnight-ntwrk/dapp-connector-api';
 import { concatMap, filter, firstValueFrom, interval, map, of, take, tap, throwError, timeout } from 'rxjs';
 import { pipe as fnPipe } from 'fp-ts/function';
 import semver from 'semver';
+
+type DAppConnectorAPI = unknown;
+type DAppConnectorWalletAPI = unknown;
+type ServiceUriConfig = { proverServerUri: string };
 
 export const connectToWallet = (logger: Logger): Promise<{ wallet: DAppConnectorWalletAPI; uris: ServiceUriConfig }> => {
   const COMPATIBLE_CONNECTOR_API_VERSION = '1.x';
@@ -13,28 +16,28 @@ export const connectToWallet = (logger: Logger): Promise<{ wallet: DAppConnector
       map(() => {
         if (typeof globalThis !== 'undefined' && typeof globalThis.window !== 'undefined') {
           // @ts-ignore
-          return globalThis.window.midnight?.mnLace;
+          return globalThis.window.midnight?.mnLace as any;
         }
         return undefined;
       }),
       tap((connectorAPI) => {
         logger.info(connectorAPI, 'Check for wallet connector API');
       }),
-      filter((connectorAPI): connectorAPI is DAppConnectorAPI => !!connectorAPI),
+      filter((connectorAPI): connectorAPI is any => !!connectorAPI),
       concatMap((connectorAPI) =>
-        semver.satisfies(connectorAPI.apiVersion, COMPATIBLE_CONNECTOR_API_VERSION)
+        semver.satisfies((connectorAPI as any).apiVersion, COMPATIBLE_CONNECTOR_API_VERSION)
           ? of(connectorAPI)
           : throwError(() => {
               logger.error(
                 {
                   expected: COMPATIBLE_CONNECTOR_API_VERSION,
-                  actual: connectorAPI.apiVersion,
+                  actual: (connectorAPI as any).apiVersion,
                 },
                 'Incompatible version of wallet connector API',
               );
 
               return new Error(
-                `Incompatible version of Midnight Lace wallet found. Require '${COMPATIBLE_CONNECTOR_API_VERSION}', got '${connectorAPI.apiVersion}'.`,
+                `Incompatible version of Midnight Lace wallet found. Require '${COMPATIBLE_CONNECTOR_API_VERSION}', got '${(connectorAPI as any).apiVersion}'.`,
               );
             }),
       ),
@@ -52,7 +55,7 @@ export const connectToWallet = (logger: Logger): Promise<{ wallet: DAppConnector
           }),
       }),
       concatMap(async (connectorAPI) => {
-        const isEnabled = await connectorAPI.isEnabled();
+        const isEnabled = await (connectorAPI as any).isEnabled();
 
         logger.info(isEnabled, 'Wallet connector API enabled status');
 
@@ -69,16 +72,16 @@ export const connectToWallet = (logger: Logger): Promise<{ wallet: DAppConnector
       concatMap(async (connectorAPI) => {
         try {
           return {
-            walletConnectorAPI: await connectorAPI.enable(),
+            walletConnectorAPI: await (connectorAPI as any).enable(),
             connectorAPI,
           };
-        } catch (e) {
+        } catch {
           logger.error('Unable to enable connector API');
           throw new Error('Application is not authorized');
         }
       }),
       concatMap(async ({ walletConnectorAPI, connectorAPI }) => {
-        const uris = await connectorAPI.serviceUriConfig();
+        const uris = await (connectorAPI as any).serviceUriConfig();
 
         logger.info('Connected to wallet connector API and retrieved service configuration');
 

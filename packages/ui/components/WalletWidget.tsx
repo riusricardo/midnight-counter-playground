@@ -1,5 +1,4 @@
 import React from 'react';
-import type { Address } from '@midnight-ntwrk/wallet-api';
 import {
   Alert,
   Box,
@@ -18,6 +17,8 @@ import ErrorIcon from '@mui/icons-material/Error';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CloseIcon from '@mui/icons-material/Close';
 import { type Logger } from 'pino';
+
+type Address = string;
 
 export enum MidnightWalletErrorType {
   WALLET_NOT_FOUND = 'WALLET_NOT_FOUND',
