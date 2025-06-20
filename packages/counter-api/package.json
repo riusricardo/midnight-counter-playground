@@ -2,33 +2,35 @@
   "name": "@repo/counter-api",
   "version": "0.0.1",
   "private": true,
-
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    },
+    "./api-ui": {
+      "types": "./dist/api-ui.d.ts",
+      "require": "./dist/api-ui.js",
+      "import": "./dist/api-ui.mjs"
     }
   },
-
   "scripts": {
     "build": "tsup",
     "test-api": "docker compose -f standalone.yml pull && DEBUG='testcontainers' vitest run"
   },
-
   "dependencies": {
-    "@midnight-ntwrk/counter-contract": "*"
+    "@midnight-ntwrk/counter-contract": "*",
+    "vite-plugin-node-polyfills": "^0.23.0"
   },
-
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
-    "tsup": "^8.0.2",
     "@types/node": "^22.15.29",
-    "@types/ws": "^8.18.1"
+    "@types/ws": "^8.18.1",
+    "esbuild-plugin-alias": "^0.2.1",
+    "tsup": "^8.0.2"
   }
 }

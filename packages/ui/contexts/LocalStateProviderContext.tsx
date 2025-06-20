@@ -1,5 +1,5 @@
 import React, { createContext, type PropsWithChildren } from 'react';
-import { BrowserLocalState, type LocalState } from './BrowserLocalState';
+import { BrowserLocalState, type LocalState } from './BrowserLocalState.js';
 import { type Logger } from 'pino';
 
 export const LocalStateProviderContext = createContext<LocalState | undefined>(undefined);

@@ -35,6 +35,8 @@ import {
   configureProviders,
   saveState
 } from '@repo/counter-api';
+import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
+import { contractConfig } from '@repo/counter-api';
 
 let logger: Logger;
 
@@ -165,7 +167,11 @@ export const run = async (config: Config, _logger: Logger, dockerEnv?: DockerCom
   const wallet = await buildWallet(config, rli);
   try {
     if (wallet !== null) {
-      const providers = await configureProviders(wallet, config);
+      const providers = await configureProviders(
+        wallet,
+        config,
+        new NodeZkConfigProvider<'increment'>(contractConfig.zkConfigPath),
+      );
       await mainLoop(providers, rli);
     }
   } catch (e) {

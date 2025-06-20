@@ -16,3 +16,4 @@
 export * from './api';
 export * from './config';
 export * from './common-types';
+export { CounterAPI, type CounterState } from './api-ui';

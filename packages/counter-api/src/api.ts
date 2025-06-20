@@ -1,3 +1,5 @@
+// This file is now Node-only. All browser-compatible exports should be moved to api-ui.ts
+
 // This file is part of midnightntwrk/example-counter.
 // Copyright (C) 2025 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
@@ -21,7 +23,6 @@ import { type CoinInfo, nativeToken, Transaction, type TransactionId } from '@mi
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import {
   type BalancedTransaction,
   createBalancedTx,
@@ -36,7 +37,6 @@ import { Transaction as ZswapTransaction } from '@midnight-ntwrk/zswap';
 import { webcrypto } from 'crypto';
 import { type Logger } from 'pino';
 import * as Rx from 'rxjs';
-import { WebSocket } from 'ws';
 import {
   type CounterContract,
   type CounterPrivateStateId,
@@ -47,15 +47,9 @@ import { type Config, contractConfig } from './config';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import * as fsAsync from 'node:fs/promises';
-import * as fs from 'node:fs';
-import { map, type Observable, retry } from 'rxjs';
+import * as env from './env';
 
 let logger: Logger;
-// Instead of setting globalThis.crypto which is read-only, we'll ensure crypto is available
-// but won't try to overwrite the global property
-// @ts-expect-error: It's needed to enable WebSocket usage through apollo
-globalThis.WebSocket = WebSocket;
 
 export const getCounterLedgerState = async (
   providers: CounterProviders,
@@ -200,10 +194,10 @@ export const buildWalletAndWaitForFunds = async (
   const directoryPath = process.env.SYNC_CACHE;
   let wallet: Wallet & Resource;
   if (directoryPath !== undefined) {
-    if (fs.existsSync(`${directoryPath}/${filename}`)) {
+    if (env.existsSync(`${directoryPath}/${filename}`)) {
       logger.info(`Attempting to restore state from ${directoryPath}/${filename}`);
       try {
-        const serializedStream = fs.createReadStream(`${directoryPath}/${filename}`, 'utf-8');
+        const serializedStream = env.createReadStream(`${directoryPath}/${filename}`);
         const serialized = await streamToString(serializedStream);
         serializedStream.on('finish', () => {
           serializedStream.close();
@@ -274,14 +268,18 @@ export const randomBytes = (length: number): Uint8Array => {
 export const buildFreshWallet = async (config: Config): Promise<Wallet & Resource> =>
   await buildWalletAndWaitForFunds(config, toHex(randomBytes(32)), '');
 
-export const configureProviders = async (wallet: Wallet & Resource, config: Config) => {
+export const configureProviders = async (
+  wallet: Wallet & Resource,
+  config: Config,
+  zkConfigProvider: any // Should be ZKConfigProvider<'increment'>, but kept as any for flexibility
+) => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
     privateStateProvider: levelPrivateStateProvider<typeof CounterPrivateStateId>({
       privateStateStoreName: contractConfig.privateStateStoreName,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-    zkConfigProvider: new NodeZkConfigProvider<'increment'>(contractConfig.zkConfigPath),
+    zkConfigProvider, // injected
     proofProvider: httpClientProofProvider(config.proofServer),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,
@@ -292,7 +290,35 @@ export function setLogger(_logger: Logger) {
   logger = _logger;
 }
 
-export const streamToString = async (stream: fs.ReadStream): Promise<string> => {
+export const saveState = async (wallet: Wallet, filename: string) => {
+  const directoryPath = process.env.SYNC_CACHE;
+  if (directoryPath !== undefined) {
+    logger.info(`Saving state in ${directoryPath}/${filename}`);
+    try {
+      await env.mkdir(directoryPath, { recursive: true });
+      const serializedState = await wallet.serializeState();
+      const writer = env.createWriteStream(`${directoryPath}/${filename}`);
+      writer.write(serializedState);
+      writer.on('finish', function () {
+        logger.info(`File '${directoryPath}/${filename}' written successfully.`);
+      });
+      writer.on('error', function (err) {
+        logger.error(err);
+      });
+      writer.end();
+    } catch (e) {
+      if (typeof e === 'string') {
+        logger.warn(e);
+      } else if (e instanceof Error) {
+        logger.warn(e.message);
+      }
+    }
+  } else {
+    logger.info('Not saving cache as sync cache was not defined');
+  }
+};
+
+export const streamToString = async (stream: env.ReadStream): Promise<string> => {
   const chunks: Buffer[] = [];
   return await new Promise((resolve, reject) => {
     stream.on('data', (chunk) => chunks.push(typeof chunk === 'string' ? Buffer.from(chunk, 'utf8') : chunk));
@@ -317,130 +343,3 @@ export const isAnotherChain = async (wallet: Wallet, offset: number) => {
     return false;
   }
 };
-
-export const saveState = async (wallet: Wallet, filename: string) => {
-  const directoryPath = process.env.SYNC_CACHE;
-  if (directoryPath !== undefined) {
-    logger.info(`Saving state in ${directoryPath}/${filename}`);
-    try {
-      await fsAsync.mkdir(directoryPath, { recursive: true });
-      const serializedState = await wallet.serializeState();
-      const writer = fs.createWriteStream(`${directoryPath}/${filename}`);
-      writer.write(serializedState);
-
-      writer.on('finish', function () {
-        logger.info(`File '${directoryPath}/${filename}' written successfully.`);
-      });
-
-      writer.on('error', function (err) {
-        logger.error(err);
-      });
-      writer.end();
-    } catch (e) {
-      if (typeof e === 'string') {
-        logger.warn(e);
-      } else if (e instanceof Error) {
-        logger.warn(e.message);
-      }
-    }
-  } else {
-    logger.info('Not saving cache as sync cache was not defined');
-  }
-};
-
-
-
-const counterContract: CounterContract = new Counter.Contract(witnesses);
-
-export interface DeployedCounterAPI {
-  readonly deployedContractAddress: ContractAddress;
-  readonly state$: Observable<CounterState>;
-  readonly increment: () => Promise<void>;
-  readonly getCounterValue: () => Promise<bigint>;
-}
-
-export interface CounterState {
-  readonly counterValue: bigint;
-}
-
-export class CounterAPI implements DeployedCounterAPI {
-  private constructor(
-    public readonly deployedContract: DeployedCounterContract,
-    public readonly providers: CounterProviders,
-    private readonly logger: Logger,
-  ) {
-    this.deployedContractAddress = deployedContract.deployTxData.public.contractAddress;
-    this.state$ = this.providers.publicDataProvider
-      .contractStateObservable(this.deployedContractAddress, { type: 'all' })
-      .pipe(
-        map((contractState) => Counter.ledger(contractState.data)),
-        map((ledgerState) => ({
-          counterValue: ledgerState.round
-        })),
-        retry({
-          delay: 500, // retry websocket connection if it fails
-        })
-      );
-  }
-
-  readonly deployedContractAddress: ContractAddress;
-  readonly state$: Observable<CounterState>;
-
-  async increment(): Promise<void> {
-    this.logger.info('Incrementing counter...');
-    const finalizedTxData = await this.deployedContract.callTx.increment();
-    this.logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
-  }
-
-  async getCounterValue(): Promise<bigint> {
-    this.logger.info('Getting counter value...');
-    const state = await this.providers.publicDataProvider.queryContractState(this.deployedContractAddress);
-    if (state === null) {
-      return BigInt(0);
-    }
-    return Counter.ledger(state.data).round;
-  }
-
-  static async deploy(
-    providers: CounterProviders,
-    logger: Logger,
-  ): Promise<CounterAPI> {
-    logger.info('Deploying counter contract...');
-    const deployedContract = await deployContract(providers, {
-      contract: counterContract,
-      privateStateId: 'counterPrivateState',
-      initialPrivateState: { privateCounter: 0 },
-    });
-    logger.info(`Deployed contract at address: ${deployedContract.deployTxData.public.contractAddress}`);
-    return new CounterAPI(deployedContract as unknown as DeployedCounterContract, providers, logger);
-  }
-
-  static async subscribe(
-    providers: CounterProviders,
-    contractAddress: ContractAddress,
-    logger: Logger,
-  ): Promise<CounterAPI> {
-    logger.info(`Subscribing to counter contract at ${contractAddress}...`);
-    const deployedContract = await findDeployedContract(providers, {
-      contractAddress,
-      contract: counterContract,
-      privateStateId: 'counterPrivateState',
-      initialPrivateState: { privateCounter: 0 },
-    });
-    logger.info('Successfully subscribed to contract');
-    return new CounterAPI(deployedContract as unknown as DeployedCounterContract, providers, logger);
-  }
-
-  static async contractExists(providers: CounterProviders, contractAddress: ContractAddress): Promise<boolean> {
-    try {
-      const state = await providers.publicDataProvider.queryContractState(contractAddress);
-      if (state === null) {
-        return false;
-      }
-      void Counter.ledger(state.data); // try to parse it
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-}

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Logger } from 'pino';
 import { type Address, type CoinPublicKey } from '@midnight-ntwrk/wallet-api';
-import { type CounterCircuits } from '@midnight-ntwrk/counter-cli';
+import { type CounterCircuits } from '@repo/counter-api';
 import {
   type BalancedTransaction,
   createBalancedTx,
