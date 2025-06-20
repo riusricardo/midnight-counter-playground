@@ -15,7 +15,7 @@
 
 import path from 'node:path';
 import { NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import { getDirPath } from './path-resolver';
+import { getDirPath } from './path-resolver.js';
 
 // Get current directory in a way that works in both ESM and CJS
 export const currentDir = getDirPath();

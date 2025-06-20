@@ -1,6 +1,6 @@
 // This file is an environment abstraction module
 // It will be aliased to either env-node.ts or env-browser.ts
-// based on the build target in tsup.config.ts
+// based on the build target in tsconfig.json
 
 // Default implementation detects browser or node environment
 export const isNodeEnvironment = typeof process !== 'undefined' && 
@@ -10,27 +10,26 @@ export const isBrowserEnvironment = !isNodeEnvironment;
 
 // Filesystem implementations to be replaced by platform-specific versions
 export const readFile = async (_path: string): Promise<string> => {
-  if (isNodeEnvironment) {
-    // Use dynamic import to avoid bundling node modules in browser builds
-    const { readFile } = await import('./env-node');
-    return readFile(_path);
+  try {
+    const { readFile } = await import('./env-node.js');
+    return await readFile(_path);
+  } catch (e) {
+    throw new Error('File system access is not available in this context');
   }
-  // Return empty string for browser
-  return Promise.reject(new Error('File system operations are not supported in the browser'));
 };
 
 export const writeFile = async (_path: string, _content: string): Promise<void> => {
-  if (isNodeEnvironment) {
-    const { writeFile } = await import('./env-node');
-    return writeFile(_path, _content);
+  try {
+    const { writeFile } = await import('./env-node.js');
+    return await writeFile(_path, _content);
+  } catch (e) {
+    throw new Error('File system access is not available in this context');
   }
-  // Return void for browser
-  return Promise.reject(new Error('File system operations are not supported in the browser'));
 };
 
 export const fileExists = async (_path: string): Promise<boolean> => {
   if (isNodeEnvironment) {
-    const { fileExists } = await import('./env-node');
+    const { fileExists } = await import('./env-node.js');
     return fileExists(_path);
   }
   return false;
@@ -38,21 +37,17 @@ export const fileExists = async (_path: string): Promise<boolean> => {
 
 // File system functions used in the API
 export const existsSync = (_path: string): boolean => {
-  if (isNodeEnvironment) {
-    try {
-      // Using require instead of import to avoid bundling
-      const fs = require('node:fs');
-      return fs.existsSync(_path);
-    } catch {
-      return false;
-    }
+  try {
+    const { fileExists } = require('./env-node.js');
+    return fileExists(_path);
+  } catch (e) {
+    throw new Error('File system access is not available in this context');
   }
-  return false;
 };
 
 export const mkdir = async (_path: string, options?: { recursive?: boolean }): Promise<void> => {
   if (isNodeEnvironment) {
-    const { mkdir } = await import('./env-node');
+    const { mkdir } = await import('./env-node.js');
     await mkdir(_path, options);
     return;
   }

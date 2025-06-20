@@ -188,9 +188,24 @@ export class TestEnvironment {
       this.testConfig.cacheFileName,
     );
     expect(this.wallet).not.toBeNull();
-    const state = await Rx.firstValueFrom(this.wallet.state());
-    expect(state.balances[nativeToken()].valueOf()).toBeGreaterThan(BigInt(0));
-    return this.wallet;
+    const state = await Rx.firstValueFrom((this.wallet as Wallet).state());
+    // Defensive: check balances and valueOf safely, no 'any' usage
+    let balanceOk = false;
+    if (state && typeof state === 'object' && 'balances' in state) {
+      const balances = (state as { balances: Record<string, unknown> }).balances;
+      const bal = balances[nativeToken()];
+      if (typeof bal === 'bigint') {
+        balanceOk = bal > 0n;
+      } else if (typeof bal === 'object' && bal !== null && typeof (bal as { valueOf?: unknown }).valueOf === 'function') {
+        // Use valueOf and check type
+        const value = (bal as { valueOf: () => unknown }).valueOf();
+        if (typeof value === 'bigint' || typeof value === 'number') {
+          balanceOk = value > 0;
+        }
+      }
+    }
+    expect(balanceOk).toBe(true);
+    return this.wallet!;
   };
 
   saveWalletCache = async () => {

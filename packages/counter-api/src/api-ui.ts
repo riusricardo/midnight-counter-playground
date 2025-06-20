@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { Counter, witnesses } from '@midnight-ntwrk/counter-contract';
+import { Counter, witnesses, type CounterPrivateState } from '@midnight-ntwrk/counter-contract';
 import { type Logger } from 'pino';
 import { map, type Observable, retry } from 'rxjs';
 import {
   type CounterContract,
   type CounterProviders,
   type DeployedCounterContract,
-} from './common-types';
+} from './common-types.js';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 
 const counterContract: CounterContract = new Counter.Contract(witnesses);
@@ -70,7 +70,7 @@ export class CounterAPI implements DeployedCounterAPI {
     const deployedContract = await deployContract(providers, {
       contract: counterContract,
       privateStateId: 'counterPrivateState',
-      initialPrivateState: { privateCounter: 0 },
+      initialPrivateState: { value: 0 },
     });
     logger.info(`Deployed contract at address: ${deployedContract.deployTxData.public.contractAddress}`);
     return new CounterAPI(deployedContract as unknown as DeployedCounterContract, providers, logger);
@@ -86,7 +86,7 @@ export class CounterAPI implements DeployedCounterAPI {
       contractAddress,
       contract: counterContract,
       privateStateId: 'counterPrivateState',
-      initialPrivateState: { privateCounter: 0 },
+      initialPrivateState: { value: 0 },
     });
     logger.info('Successfully subscribed to contract');
     return new CounterAPI(deployedContract as unknown as DeployedCounterContract, providers, logger);
@@ -108,5 +108,5 @@ export class CounterAPI implements DeployedCounterAPI {
 
 // Add browser-compatible exports from api.ts for use in the UI/web app
 export { Counter, witnesses } from '@midnight-ntwrk/counter-contract';
-export type { CounterContract, CounterProviders, DeployedCounterContract } from './common-types';
+export type { CounterContract, CounterProviders, DeployedCounterContract } from './common-types.js';
 export { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';

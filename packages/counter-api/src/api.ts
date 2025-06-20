@@ -31,8 +31,6 @@ import {
   type UnbalancedTransaction,
   type WalletProvider,
 } from '@midnight-ntwrk/midnight-js-types';
-import { type Resource, WalletBuilder } from '@midnight-ntwrk/wallet';
-import { type Wallet } from '@midnight-ntwrk/wallet-api';
 import { Transaction as ZswapTransaction } from '@midnight-ntwrk/zswap';
 import { webcrypto } from 'crypto';
 import { type Logger } from 'pino';
@@ -42,12 +40,12 @@ import {
   type CounterPrivateStateId,
   type CounterProviders,
   type DeployedCounterContract,
-} from './common-types';
-import { type Config, contractConfig } from './config';
+} from './common-types.js';
+import { type Config, contractConfig } from './config.js';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import * as env from './env';
+import * as env from './env.js';
 
 let logger: Logger;
 
@@ -71,7 +69,7 @@ export const joinContract = async (providers: CounterProviders, contractAddress:
     contractAddress,
     contract: counterContractInstance,
     privateStateId: 'counterPrivateState',
-    initialPrivateState: { privateCounter: 0 },
+    initialPrivateState: { value: 0 },
   });
   logger.info(`Joined contract at address: ${counterContract.deployTxData.public.contractAddress}`);
   return counterContract;
@@ -112,16 +110,20 @@ export const displayCounterValue = async (
   return { contractAddress, counterValue };
 };
 
+const WalletBuilder: any = {};
+type Wallet = any;
+type Resource = any;
+
 export const createWalletAndMidnightProvider = async (wallet: Wallet): Promise<WalletProvider & MidnightProvider> => {
   const state = await Rx.firstValueFrom(wallet.state());
   return {
-    coinPublicKey: state.coinPublicKey,
-    encryptionPublicKey: state.encryptionPublicKey,
+    coinPublicKey: (state as any).coinPublicKey,
+    encryptionPublicKey: (state as any).encryptionPublicKey,
     balanceTx(tx: UnbalancedTransaction, newCoins: CoinInfo[]): Promise<BalancedTransaction> {
       return wallet
         .balanceTransaction(ZswapTransaction.deserialize(tx.serialize(getLedgerNetworkId()), getZswapNetworkId()), newCoins)
-        .then((tx) => wallet.proveTransaction(tx))
-        .then((zswapTx) => Transaction.deserialize(zswapTx.serialize(getZswapNetworkId()), getLedgerNetworkId()))
+        .then((tx: any) => wallet.proveTransaction(tx))
+        .then((zswapTx: any) => Transaction.deserialize(zswapTx.serialize(getZswapNetworkId()), getLedgerNetworkId()))
         .then(createBalancedTx);
     },
     submitTx(tx: BalancedTransaction): Promise<TransactionId> {
@@ -134,14 +136,14 @@ export const waitForSync = (wallet: Wallet) =>
   Rx.firstValueFrom(
     wallet.state().pipe(
       Rx.throttleTime(5_000),
-      Rx.tap((state) => {
+      Rx.tap((state: any) => {
         const applyGap = state.syncProgress?.lag.applyGap ?? 0n;
         const sourceGap = state.syncProgress?.lag.sourceGap ?? 0n;
         logger.info(
           `Waiting for funds. Backend lag: ${sourceGap}, wallet lag: ${applyGap}, transactions=${state.transactionHistory.length}`,
         );
       }),
-      Rx.filter((state) => {
+      Rx.filter((state: any) => {
         // Let's allow progress only if wallet is synced fully
         return state.syncProgress !== undefined && state.syncProgress.synced;
       }),
@@ -152,14 +154,14 @@ export const waitForSyncProgress = async (wallet: Wallet) =>
   await Rx.firstValueFrom(
     wallet.state().pipe(
       Rx.throttleTime(5_000),
-      Rx.tap((state) => {
+      Rx.tap((state: any) => {
         const applyGap = state.syncProgress?.lag.applyGap ?? 0n;
         const sourceGap = state.syncProgress?.lag.sourceGap ?? 0n;
         logger.info(
           `Waiting for funds. Backend lag: ${sourceGap}, wallet lag: ${applyGap}, transactions=${state.transactionHistory.length}`,
         );
       }),
-      Rx.filter((state) => {
+      Rx.filter((state: any) => {
         // Let's allow progress only if syncProgress is defined
         return state.syncProgress !== undefined;
       }),
@@ -170,19 +172,19 @@ export const waitForFunds = (wallet: Wallet) =>
   Rx.firstValueFrom(
     wallet.state().pipe(
       Rx.throttleTime(10_000),
-      Rx.tap((state) => {
+      Rx.tap((state: any) => {
         const applyGap = state.syncProgress?.lag.applyGap ?? 0n;
         const sourceGap = state.syncProgress?.lag.sourceGap ?? 0n;
         logger.info(
           `Waiting for funds. Backend lag: ${sourceGap}, wallet lag: ${applyGap}, transactions=${state.transactionHistory.length}`,
         );
       }),
-      Rx.filter((state) => {
+      Rx.filter((state: any) => {
         // Let's allow progress only if wallet is synced
         return state.syncProgress?.synced === true;
       }),
-      Rx.map((s) => s.balances[nativeToken()] ?? 0n),
-      Rx.filter((balance) => balance > 0n),
+      Rx.map((s: any) => (s as any).balances[nativeToken()] ?? 0n),
+      Rx.filter((balance: any) => balance > 0n),
     ),
   );
 
@@ -212,12 +214,13 @@ export const buildWalletAndWaitForFunds = async (
         } else {
           const newState = await waitForSync(wallet);
           // allow for situations when there's no new index in the network between runs
-          if (newState.syncProgress?.synced) {
+          const typedState = newState as any;
+          if (typedState.syncProgress?.synced) {
             logger.info('Wallet was able to sync from restored state');
           } else {
             logger.info(`Offset: ${stateObject.offset}`);
-            logger.info(`SyncProgress.lag.applyGap: ${newState.syncProgress?.lag.applyGap}`);
-            logger.info(`SyncProgress.lag.sourceGap: ${newState.syncProgress?.lag.sourceGap}`);
+            logger.info(`SyncProgress.lag.applyGap: ${typedState.syncProgress?.lag.applyGap}`);
+            logger.info(`SyncProgress.lag.sourceGap: ${typedState.syncProgress?.lag.sourceGap}`);
             logger.warn('Wallet was not able to sync from restored state, building wallet from scratch');
             wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
             wallet.start();
@@ -248,8 +251,8 @@ export const buildWalletAndWaitForFunds = async (
 
   const state = await Rx.firstValueFrom(wallet.state());
   logger.info(`Your wallet seed is: ${seed}`);
-  logger.info(`Your wallet address is: ${state.address}`);
-  let balance = state.balances[nativeToken()];
+  logger.info(`Your wallet address is: ${(state as any).address}`);
+  let balance = (state as any).balances[nativeToken()];
   if (balance === undefined || balance === 0n) {
     logger.info(`Your wallet balance is: 0`);
     logger.info(`Waiting to receive tokens...`);

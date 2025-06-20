@@ -2,23 +2,24 @@
   "name": "@repo/counter-api",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.js"
     },
     "./api-ui": {
       "types": "./dist/api-ui.d.ts",
-      "require": "./dist/api-ui.js",
-      "import": "./dist/api-ui.mjs"
+      "import": "./dist/api-ui.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsc",
     "test-api": "docker compose -f standalone.yml pull && DEBUG='testcontainers' vitest run"
   },
   "dependencies": {
@@ -30,7 +31,6 @@
     "@repo/typescript-config": "*",
     "@types/node": "^22.15.29",
     "@types/ws": "^8.18.1",
-    "esbuild-plugin-alias": "^0.2.1",
-    "tsup": "^8.0.2"
+    "typescript": "5.5.4"
   }
 }

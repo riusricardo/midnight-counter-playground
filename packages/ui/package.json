@@ -3,12 +3,24 @@
   "version": "0.0.1",
   "license": "MIT",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./index.ts",
-    "./utils": "./utils/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.js"
+    }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsc",
     "lint": "eslint \"**/*.ts\""
   },
   "dependencies": {
@@ -33,7 +45,6 @@
     "eslint": "^9.28.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
-    "tsup": "^8.5.0",
     "typescript": "5.5.4"
   }
 }

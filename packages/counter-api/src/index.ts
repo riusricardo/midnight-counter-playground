@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './api';
-export * from './config';
-export * from './common-types';
-export { CounterAPI, type CounterState } from './api-ui';
+export * from './api.js';
+export * from './config.js';
+export * from './common-types.js';
+export { CounterAPI, type CounterState } from './api-ui.js';
