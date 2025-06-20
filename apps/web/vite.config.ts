@@ -79,19 +79,6 @@ export default defineConfig({
       '@repo/counter-api/dist/env': '@repo/counter-api/src/env-browser.ts',
       '@repo/counter-api/dist/env-node': '@repo/counter-api/src/env-browser.ts',
       // fs/promises is intentionally not polyfilled for browser
-
-      // WebSocket Shim Configuration for Browser Builds
-      //
-      // PROBLEM: @midnight-ntwrk/midnight-js-indexer-public-data-provider imports isomorphic-ws
-      // as a namespace and tries to access ws.WebSocket, but isomorphic-ws/browser.js only
-      // provides a default export. This causes build warnings about missing named exports.
-      //
-      // SOLUTION: Replace both import paths with our custom shim that provides both named
-      // and default WebSocket exports using the browser's native WebSocket implementation.
-      //
-      // The shim is located at: packages/counter-api/src/ws-shim.js
-      'isomorphic-ws': path.resolve(__dirname, '../../packages/counter-api/src/ws-shim.js'),
-      'isomorphic-ws/browser.js': path.resolve(__dirname, '../../packages/counter-api/src/ws-shim.js'),
     },
   },
   define: {

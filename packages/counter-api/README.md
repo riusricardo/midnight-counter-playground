@@ -17,9 +17,6 @@ This document provides an overview of all the documentation files and commented 
 - **[src/env-browser.ts](./src/env-browser.ts)** - Browser-compatible stubs and fallbacks
 - **[src/path-resolver.ts](./src/path-resolver.ts)** - Universal path resolution for CJS/ESM
 
-#### Browser Compatibility Shims  
-- **[src/ws-shim.js](./src/ws-shim.js)** - WebSocket shim for browser builds
-
 #### Configuration Files
 - **[apps/web/vite.config.ts](../../apps/web/vite.config.ts)** - Vite configuration with aliases and comments
 
@@ -31,7 +28,6 @@ This document provides an overview of all the documentation files and commented 
 
 **Solutions Documented**:
 - Environment abstraction layer (`env.ts`, `env-node.ts`, `env-browser.ts`)
-- WebSocket compatibility shim (`ws-shim.js`)
 - Universal path resolution (`path-resolver.ts`)
 - Vite alias configuration for browser builds
 
@@ -56,7 +52,6 @@ Each documented file includes:
 | Need | File | Key Function |
 |------|------|-------------|
 | File operations | `env.ts` | `readFile()`, `writeFile()` |
-| WebSocket in browser | `ws-shim.js` | `WebSocket` export |
 | Path detection | `path-resolver.ts` | `getDirPath()` |
 | Browser config | `vite.config.ts` | Aliases section |
 
