@@ -15,18 +15,27 @@ const CounterAppContent: React.FC<{ logger: Logger }> = ({ logger }) => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
+      {/* Wallet Widget - positioned at top right */}
+      <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 1000 }}>{walletState.widget}</Box>
+
       <Typography variant="h3" component="h1" gutterBottom align="center">
         Midnight Counter App
       </Typography>
       <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {walletState.isConnected ? (
           <Paper elevation={3} sx={{ p: 3, width: '100%', maxWidth: 600 }}>
-            <CounterApplication providers={walletState.providers} logger={logger} />
+            <CounterApplication providers={walletState.providers as any} logger={logger} />
           </Paper>
         ) : (
-          <Typography variant="h6" align="center" color="textSecondary">
-            Please connect your wallet to use the Counter Application
-          </Typography>
+          <Paper elevation={3} sx={{ p: 3, width: '100%', maxWidth: 600, textAlign: 'center' }}>
+            <Typography variant="h6" gutterBottom color="textSecondary">
+              Welcome to Midnight Counter App
+            </Typography>
+            <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+              Please connect your Midnight Lace wallet to start using the Counter Application
+            </Typography>
+            {walletState.widget}
+          </Paper>
         )}
       </Box>
     </Container>
