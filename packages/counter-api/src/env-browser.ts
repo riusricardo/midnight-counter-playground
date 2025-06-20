@@ -1,8 +1,35 @@
-// Environment-specific implementation for browser environments
+/**
+ * Browser Environment Implementation
+ * 
+ * PURPOSE:
+ * This file provides browser-compatible implementations that safely handle
+ * file system operations and Node.js-specific APIs in browser environments.
+ * 
+ * USAGE:
+ * - Used automatically in browser builds via Vite alias configuration
+ * - Configured in apps/web/vite.config.ts as:
+ *   '@repo/counter-api/src/env': '@repo/counter-api/src/env-browser.ts'
+ * - Never used in Node.js environments
+ * 
+ * APPROACH:
+ * Since browsers don't have file system access, this file:
+ * - Throws descriptive errors for file operations
+ * - Returns safe defaults where appropriate (e.g., existsSync returns false)
+ * - Provides mock stream implementations that emit errors
+ * - Maintains type compatibility with Node.js implementations
+ * 
+ * SAFETY:
+ * All operations fail gracefully with clear error messages rather than
+ * causing runtime crashes or undefined behavior.
+ */
+
+// Environment Detection Constants
+// These are always false/true respectively in browser implementation
 export const isNodeEnvironment = false;
 export const isBrowserEnvironment = true;
 
-// Empty implementations for filesystem functions
+// File System Operation Stubs
+// These functions throw errors since browsers don't have file system access
 export const readFile = async (): Promise<string> => {
   throw new Error('File system operations are not supported in the browser');
 };
@@ -15,8 +42,10 @@ export const fileExists = async (): Promise<boolean> => {
   throw new Error('File system operations are not supported in the browser');
 };
 
-// Browser-compatible versions of Node.js fs functions
+// Safe Fallback Implementations
+// These provide safe defaults rather than throwing errors
 export const existsSync = (): boolean => {
+  // Always return false since no files exist in browser context
   return false;
 };
 
@@ -24,6 +53,8 @@ export const mkdir = async (): Promise<void> => {
   throw new Error('File system operations are not supported in the browser');
 };
 
+// Stream Interface Definitions
+// These match the Node.js stream interfaces for type compatibility
 export interface ReadStream {
   on(event: string, callback: (...args: any[]) => void): ReadStream;
   close(): void;
@@ -35,6 +66,8 @@ export interface WriteStream {
   end(): void;
 }
 
+// Mock Stream Implementations
+// These provide stream-like objects that emit appropriate errors
 export const createReadStream = (): ReadStream => {
   const stream = {
     on: (event: string, callback: (...args: any[]) => void): ReadStream => {

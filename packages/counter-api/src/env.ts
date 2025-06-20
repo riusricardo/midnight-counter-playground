@@ -1,16 +1,48 @@
-// This file is an environment abstraction module
-// It will be aliased to either env-node.ts or env-browser.ts
-// based on the build target in tsconfig.json
+/**
+ * Environment Abstraction Layer
+ * 
+ * PROBLEM:
+ * The counter-api needs to work in both Node.js and browser environments, but:
+ * - Node.js has full file system access (fs module, streams, etc.)
+ * - Browsers don't have file system access and need different implementations
+ * - Some APIs need platform-specific implementations (storage, networking, etc.)
+ * 
+ * SOLUTION:
+ * This file provides a unified interface that:
+ * 1. **Environment Detection**: Detects Node.js vs browser at runtime
+ * 2. **Conditional Imports**: Dynamically imports platform-specific implementations
+ * 3. **Fallback Behavior**: Provides safe fallbacks for unsupported operations
+ * 4. **Vite Alias Support**: Works with Vite's alias system for browser builds
+ * 
+ * CONFIGURATION:
+ * - Browser builds: Vite aliases this to env-browser.ts (see apps/web/vite.config.ts)
+ * - Node.js builds: Uses this file directly, which imports from env-node.ts
+ * - This provides seamless platform abstraction without build-time complexity
+ * 
+ * USAGE:
+ * Import from this file everywhere in the codebase:
+ * ```typescript
+ * import { readFile, writeFile, isNodeEnvironment } from './env.js';
+ * ```
+ * 
+ * The implementation will automatically choose the right platform-specific code.
+ */
 
-// Default implementation detects browser or node environment
+// Runtime environment detection
+// This checks for Node.js-specific globals to determine the environment
 export const isNodeEnvironment = typeof process !== 'undefined' && 
   process.versions != null && 
   process.versions.node != null;
 export const isBrowserEnvironment = !isNodeEnvironment;
 
-// Filesystem implementations to be replaced by platform-specific versions
+// File System API Abstractions
+// These functions provide a unified interface for file operations
+// In Node.js: Uses real fs module functions
+// In Browser: Throws appropriate errors or provides fallbacks
+
 export const readFile = async (_path: string): Promise<string> => {
   try {
+    // Dynamically import Node.js implementation
     const { readFile } = await import('./env-node.js');
     return await readFile(_path);
   } catch (e) {
@@ -35,7 +67,8 @@ export const fileExists = async (_path: string): Promise<boolean> => {
   return false;
 };
 
-// File system functions used in the API
+// Synchronous file existence check (Node.js only)
+// Browser builds will throw an error if this is called
 export const existsSync = (_path: string): boolean => {
   try {
     const { fileExists } = require('./env-node.js');
@@ -54,7 +87,8 @@ export const mkdir = async (_path: string, options?: { recursive?: boolean }): P
   throw new Error('File system operations are not supported in the browser');
 };
 
-// Stream types
+// Stream Type Definitions
+// These types provide compatibility with Node.js streams in a platform-agnostic way
 export interface ReadStream {
   on(event: string, callback: (...args: any[]) => void): ReadStream;
   close(): void;
@@ -66,14 +100,18 @@ export interface WriteStream {
   end(): void;
 }
 
-// Stream functions
+// Stream Factory Functions
+// Create file streams with platform-appropriate implementations
+// Node.js: Uses real fs streams
+// Browser: Returns mock streams that emit errors
+
 export const createReadStream = (_path: string): ReadStream => {
   if (isNodeEnvironment) {
     try {
       const fs = require('node:fs');
       return fs.createReadStream(_path, 'utf-8');
     } catch {
-      // Return fake stream
+      // Return mock stream that signals failure
       const stream: ReadStream = {
         on: function(event: string, callback: (...args: any[]) => void): ReadStream {
           if (event === 'error') {
@@ -87,7 +125,7 @@ export const createReadStream = (_path: string): ReadStream => {
     }
   }
   
-  // Fake stream for browser
+  // Mock stream for browser environment
   const stream: ReadStream = {
     on: function(event: string, callback: (...args: any[]) => void): ReadStream {
       if (event === 'error') {
@@ -106,7 +144,7 @@ export const createWriteStream = (_path: string): WriteStream => {
       const fs = require('node:fs');
       return fs.createWriteStream(_path);
     } catch {
-      // Return fake stream
+      // Return mock stream that signals failure
       const stream: WriteStream = {
         write: function(): boolean { return false; },
         on: function(event: string, callback: (...args: any[]) => void): WriteStream {
@@ -121,7 +159,7 @@ export const createWriteStream = (_path: string): WriteStream => {
     }
   }
   
-  // Fake stream for browser
+  // Mock stream for browser environment
   const stream: WriteStream = {
     write: function(): boolean { return false; },
     on: function(event: string, callback: (...args: any[]) => void): WriteStream {
@@ -135,10 +173,11 @@ export const createWriteStream = (_path: string): WriteStream => {
   return stream;
 };
 
-// Constants needed by the API
+// File System Constants
+// Node.js fs.constants values for compatibility
 export const constants = {
-  F_OK: 0,
-  R_OK: 4,
-  W_OK: 2,
-  X_OK: 1
+  F_OK: 0, // File exists
+  R_OK: 4, // File is readable
+  W_OK: 2, // File is writable
+  X_OK: 1  // File is executable
 };

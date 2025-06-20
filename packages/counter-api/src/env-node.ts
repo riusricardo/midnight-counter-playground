@@ -1,11 +1,36 @@
+/**
+ * Node.js Environment Implementation
+ * 
+ * PURPOSE:
+ * This file provides Node.js-specific implementations for file system operations,
+ * streams, and other Node.js APIs that are not available in browsers.
+ * 
+ * USAGE:
+ * - Used directly in Node.js environments
+ * - Imported conditionally by env.ts for dynamic platform detection
+ * - Never used in browser builds (browser builds are aliased to env-browser.ts)
+ * 
+ * FEATURES:
+ * - Full file system access using Node.js fs module
+ * - Real stream implementations for reading/writing files
+ * - Async/await support for modern Node.js patterns
+ * - Type-safe interfaces that match browser fallbacks
+ * 
+ * CONFIGURATION:
+ * No special configuration needed - this file is used automatically when
+ * running in Node.js environments (CLI, tests, build scripts, etc.)
+ */
+
 import * as fsAsync from 'node:fs/promises';
 import * as fs from 'node:fs';
 
-// Environment-specific implementation for Node.js environments
+// Environment Detection Constants
+// These are always true in Node.js implementation
 export const isNodeEnvironment = true;
 export const isBrowserEnvironment = false;
 
-// Filesystem implementations for Node.js
+// File System Operations
+// These functions provide async file operations using Node.js fs/promises
 export const readFile = async (path: string): Promise<string> => {
   return fsAsync.readFile(path, 'utf-8');
 };
@@ -23,11 +48,13 @@ export const fileExists = async (path: string): Promise<boolean> => {
   }
 };
 
-// Re-export Node.js fs functions that are used in the API
+// Direct Re-exports from Node.js fs module
+// These provide access to synchronous operations, streams, and constants
 export const { existsSync, createReadStream, createWriteStream, constants } = fs;
 export const { mkdir } = fsAsync;
 
-// Define types to match the browser implementation
+// TypeScript Interface Definitions
+// These extend Node.js stream types to match the browser interface definitions
 export interface ReadStream extends fs.ReadStream {}
 export interface WriteStream extends fs.WriteStream {}
 
