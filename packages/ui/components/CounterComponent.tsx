@@ -138,7 +138,7 @@ export const CounterDisplay: React.FC = () => {
 
 export const DeployCounterButton: React.FC<{
   providers: any;
-  onDeployed: (contractAddress: ContractAddress) => void;
+  onDeployed: (address: ContractAddress) => void;
 }> = ({ providers, onDeployed }) => {
   const [isDeploying, setIsDeploying] = useState(false);
   const [error, setError] = useState<Error | null>(null);

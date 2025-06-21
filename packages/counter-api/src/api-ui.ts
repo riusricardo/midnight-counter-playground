@@ -10,7 +10,7 @@ import {
 } from './common-types.js';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 
-const counterContract: CounterContract = new Counter.Contract(witnesses);
+const counterContractInstance: CounterContract = new Counter.Contract(witnesses);
 
 export interface DeployedCounterAPI {
   readonly deployedContractAddress: ContractAddress;
@@ -66,7 +66,7 @@ export class CounterAPI implements DeployedCounterAPI {
   ): Promise<CounterAPI> {
     console.log('Deploying counter contract...');
     const deployedContract = await deployContract(providers, {
-      contract: counterContract,
+      contract: counterContractInstance,
       privateStateId: 'counterPrivateState',
       initialPrivateState: privateState,
     });
@@ -82,7 +82,7 @@ export class CounterAPI implements DeployedCounterAPI {
     try {
       const deployedContract = await findDeployedContract(providers, {
         contractAddress,
-        contract: counterContract,
+        contract: counterContractInstance,
         privateStateId: 'counterPrivateState',
         initialPrivateState: { value: 0 },
       });

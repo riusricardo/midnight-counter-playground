@@ -28,7 +28,7 @@ const CounterAppContent: React.FC<{ logger: Logger }> = ({ logger }) => {
       <Typography variant="h3" component="h1" gutterBottom align="center">
         Midnight Counter App
       </Typography>
-      <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 600 }}>
         {walletState.isConnected ? (
           <Paper elevation={3} sx={{ p: 3, width: '100%', maxWidth: 600 }}>
             <Tabs value={tabValue} onChange={handleTabChange} centered sx={{ mb: 3 }}>
