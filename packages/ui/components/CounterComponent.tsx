@@ -146,32 +146,63 @@ export const DeployCounterButton: React.FC<{
 
   const deployCounter = async () => {
     try {
+      console.log('🚀 CounterComponent: Starting deployment...');
       setIsDeploying(true);
       setError(null);
       setDeploymentProgress('Preparing deployment...');
 
+      console.log('🔍 CounterComponent: Checking providers...');
+      console.log('providers object:', providers);
+      console.log('providers type:', typeof providers);
+
       // Validate that we have the necessary providers
       if (!providers || !providers.publicDataProvider || !providers.privateStateProvider) {
+        console.error('❌ CounterComponent: Missing providers');
         throw new Error('Missing required providers for deployment');
       }
 
+      console.log('✅ CounterComponent: Providers validation passed');
       setDeploymentProgress('Deploying counter contract...');
 
-      // Use deploy function from api.ts with proper parameters
-      const initialPrivateState: CounterPrivateState = { value: 0 };
-      const deployedContract = await CounterAPI.deploy(providers, initialPrivateState);
+      try {
+        console.log('📞 CounterComponent: About to call CounterAPI.deploy...');
+        // Use deploy function from api.ts with proper parameters
+        const initialPrivateState: CounterPrivateState = { value: 0 };
+        console.log('📦 CounterComponent: Private state:', initialPrivateState);
+        
+        const deployedContract = await CounterAPI.deploy(providers, initialPrivateState);
+        console.log('✅ CounterComponent: Deploy call completed successfully');
 
-      if (!deployedContract || !deployedContract.deployedContractAddress) {
-        throw new Error('Deployment succeeded but failed to get contract address');
+        if (!deployedContract || !deployedContract.deployedContractAddress) {
+          throw new Error('Deployment succeeded but failed to get contract address');
+        }
+
+        const contractAddress = deployedContract.deployedContractAddress;
+        setDeploymentProgress('Deployment successful!');
+
+        onDeployed(contractAddress);
+        setIsDeploying(false);
+        setDeploymentProgress('');
+      } catch (deploymentError) {
+        console.error('❌ CounterComponent: Deployment error caught:', deploymentError);
+        // Handle specific verifier key version errors
+        if (
+          deploymentError instanceof Error &&
+          (deploymentError.message.includes('VerifierKey') ||
+            deploymentError.message.includes('Unsupported version'))
+        ) {
+          setDeploymentProgress('');
+          throw new Error(
+            'Contract deployment failed due to version compatibility issues. ' +
+              'This may occur when the contract runtime and client versions are mismatched. ' +
+              'Please try refreshing the page or contact support if the issue persists. ' +
+              `Technical details: ${deploymentError.message}`,
+          );
+        }
+        throw deploymentError;
       }
-
-      const contractAddress = deployedContract.deployedContractAddress;
-      setDeploymentProgress('Deployment successful!');
-
-      onDeployed(contractAddress);
-      setIsDeploying(false);
-      setDeploymentProgress('');
     } catch (err) {
+      console.error('❌ CounterComponent: Top-level error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to deploy counter contract';
       setError(new Error(errorMessage));
       setIsDeploying(false);
