@@ -17,3 +17,4 @@
 export * from './unified-api.js';
 export * from './config.js';
 export * from './common-types.js';
+export * from './node-api.js';

@@ -18,67 +18,18 @@
 
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
 import { Counter, type CounterPrivateState, witnesses } from '@midnight-ntwrk/counter-contract';
-import { type CoinInfo, nativeToken, Transaction, type TransactionId } from '@midnight-ntwrk/ledger';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
-import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
-import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 import {
-  type BalancedTransaction,
-  createBalancedTx,
   type FinalizedTxData,
-  type MidnightProvider,
-  type UnbalancedTransaction,
-  type WalletProvider,
 } from '@midnight-ntwrk/midnight-js-types';
-import { Transaction as ZswapTransaction } from '@midnight-ntwrk/zswap';
-
-// Browser-compatible private state provider inline implementation
-const createBrowserPrivateStateProvider = <T extends string = string>(config: { privateStateStoreName: string }) => {
-  const storage = new Map<string, unknown>();
-  const signingKeys = new Map<string, any>();
-  
-  const getStorageKey = (key: T): string => `${config.privateStateStoreName}:${key}`;
-  const getSigningKeyStorageKey = (key: T): string => `${config.privateStateStoreName}:signingKey:${key}`;
-
-  return {
-    async get(key: T): Promise<unknown | null> {
-      return storage.get(getStorageKey(key)) ?? null;
-    },
-    async set(key: T, state: unknown): Promise<void> {
-      storage.set(getStorageKey(key), state);
-    },
-    async remove(key: T): Promise<void> {
-      storage.delete(getStorageKey(key));
-    },
-    async clear(): Promise<void> {
-      storage.clear();
-    },
-    async setSigningKey(key: T, signingKey: any): Promise<void> {
-      signingKeys.set(getSigningKeyStorageKey(key), signingKey);
-    },
-    async getSigningKey(key: T): Promise<any | null> {
-      return signingKeys.get(getSigningKeyStorageKey(key)) ?? null;
-    },
-    async removeSigningKey(key: T): Promise<void> {
-      signingKeys.delete(getSigningKeyStorageKey(key));
-    },
-    async clearSigningKeys(): Promise<void> {
-      signingKeys.clear();
-    },
-  };
-};
 
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
-import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { map, type Observable, retry } from 'rxjs';
 import {
   type CounterContract,
-  type CounterPrivateStateId,
   type CounterProviders,
   type DeployedCounterContract,
 } from './common-types.js';
-import { type Config, contractConfig } from './config.js';
-import * as Rx from 'rxjs';
 
 // Single shared contract instance to ensure consistency
 const counterContractInstance: CounterContract = new Counter.Contract(witnesses);
@@ -244,61 +195,6 @@ export class CounterAPI implements DeployedCounterAPI {
     }
   }
 }
-
-// Browser-compatible random bytes function
-export const randomBytes = (length: number): Uint8Array => {
-  const bytes = new Uint8Array(length);
-  
-  // Use globalThis.crypto for browser compatibility or webcrypto for Node.js
-  if (typeof globalThis !== 'undefined' && globalThis.crypto && globalThis.crypto.getRandomValues) {
-    globalThis.crypto.getRandomValues(bytes);
-  } else if (typeof require !== 'undefined') {
-    // Node.js environment
-    const { webcrypto } = require('crypto');
-    webcrypto.getRandomValues(bytes);
-  } else {
-    throw new Error('No secure random source available');
-  }
-  
-  return bytes;
-};
-
-// Browser-compatible createWalletAndMidnightProvider (only for typing, real implementation in Node.js)
-export const createWalletAndMidnightProvider = async (wallet: any): Promise<WalletProvider & MidnightProvider> => {
-  const state = await Rx.firstValueFrom(wallet.state());
-  return {
-    coinPublicKey: (state as any).coinPublicKey,
-    encryptionPublicKey: (state as any).encryptionPublicKey,
-    balanceTx(tx: UnbalancedTransaction, newCoins: CoinInfo[]): Promise<BalancedTransaction> {
-      return wallet
-        .balanceTransaction(ZswapTransaction.deserialize(tx.serialize(getLedgerNetworkId()), getZswapNetworkId()), newCoins)
-        .then((tx: any) => wallet.proveTransaction(tx))
-        .then((zswapTx: any) => Transaction.deserialize(zswapTx.serialize(getZswapNetworkId()), getLedgerNetworkId()))
-        .then(createBalancedTx);
-    },
-    submitTx(tx: BalancedTransaction): Promise<TransactionId> {
-      return wallet.submitTransaction(tx);
-    },
-  };
-};
-
-export const configureProviders = async (
-  wallet: any, // Wallet & Resource,
-  config: Config,
-  zkConfigProvider: any // Should be ZKConfigProvider<'increment'>, but kept as any for flexibility
-): Promise<CounterProviders> => {
-  const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
-  return {
-    privateStateProvider: createBrowserPrivateStateProvider<typeof CounterPrivateStateId>({
-      privateStateStoreName: contractConfig.privateStateStoreName,
-    }) as any,  // Type assertion to bypass strict typing
-    publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-    zkConfigProvider: zkConfigProvider as any, // injected
-    proofProvider: httpClientProofProvider(config.proofServer) as any,
-    walletProvider: walletAndMidnightProvider as any,
-    midnightProvider: walletAndMidnightProvider as any,
-  } as CounterProviders;
-};
 
 // Legacy API functions for compatibility with existing Node.js code
 export const getCounterLedgerState = async (

@@ -648,15 +648,6 @@
   resolved "https://registry.yarnpkg.com/@midnight-ntwrk/ledger/-/ledger-4.0.0.tgz#2cf7370ff6e27482cce60724f114935512b5e473"
   integrity sha512-cnJisY8uQ4NO54miDnjs/ov6n102ZPfKEPxtiDKVEdlKijcc70jz/CI2yBCc0itlwwaqma7FM2Ou5N4pWpbwbg==
 
-"@midnight-ntwrk/midnight-js-contracts@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-contracts/-/midnight-js-contracts-2.0.1.tgz#aab2080b33840a1f28e0a6f64dd107983b98bebf"
-  integrity sha512-U3T2jKWafU4R7t0jERaFbzkAEtFT8WRFVaILf2GOxAKPwIegkKzzFP+9Kc/1WRkU0d2OnwLvkn0pKU2BVj23vA==
-  dependencies:
-    "@midnight-ntwrk/midnight-js-network-id" "2.0.1"
-    "@midnight-ntwrk/midnight-js-types" "2.0.1"
-    "@midnight-ntwrk/midnight-js-utils" "2.0.1"
-
 "@midnight-ntwrk/midnight-js-contracts@2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-contracts/-/midnight-js-contracts-2.0.2.tgz#91c50d5e1e00f63e5dcb02fec15b5d80dae0c2f6"
@@ -666,14 +657,6 @@
     "@midnight-ntwrk/midnight-js-types" "2.0.2"
     "@midnight-ntwrk/midnight-js-utils" "2.0.2"
 
-"@midnight-ntwrk/midnight-js-fetch-zk-config-provider@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-fetch-zk-config-provider/-/midnight-js-fetch-zk-config-provider-2.0.1.tgz#00f0658f11c01528ec7bf3ec5afef549d5ec2eec"
-  integrity sha512-LJ7s/KZskwZPxP6cUMvzqa5WmpCc72sfYhkuBivDfMwUoR0qiUGRRbz4xGThxJvITrENSFeTpBkvBhpMhoXBMA==
-  dependencies:
-    "@midnight-ntwrk/midnight-js-types" "2.0.1"
-    cross-fetch "^4.0.0"
-
 "@midnight-ntwrk/midnight-js-fetch-zk-config-provider@2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-fetch-zk-config-provider/-/midnight-js-fetch-zk-config-provider-2.0.2.tgz#a09af576d16fa196ab7422733e3ec6c2da8fcae3"
@@ -681,18 +664,6 @@
   dependencies:
     "@midnight-ntwrk/midnight-js-types" "2.0.2"
     cross-fetch "^4.0.0"
-
-"@midnight-ntwrk/midnight-js-http-client-proof-provider@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-http-client-proof-provider/-/midnight-js-http-client-proof-provider-2.0.1.tgz#2a1796587098038cc9b7b4166d5916976b3fd4dd"
-  integrity sha512-3MiB0wH0jnXXu/SlIkC29DikSNYKdnTgp8DdcY6NU6Jw4A9RBhFeJpsJ7Cdc9HyXm97nVpaVoIjyEbUVfGukCA==
-  dependencies:
-    "@dao-xyz/borsh" "^5.1.5"
-    "@midnight-ntwrk/midnight-js-network-id" "2.0.1"
-    "@midnight-ntwrk/midnight-js-types" "2.0.1"
-    cross-fetch "^4.0.0"
-    fetch-retry "^6.0.0"
-    lodash "^4.17.21"
 
 "@midnight-ntwrk/midnight-js-http-client-proof-provider@2.0.2":
   version "2.0.2"
@@ -705,23 +676,6 @@
     cross-fetch "^4.0.0"
     fetch-retry "^6.0.0"
     lodash "^4.17.21"
-
-"@midnight-ntwrk/midnight-js-indexer-public-data-provider@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-indexer-public-data-provider/-/midnight-js-indexer-public-data-provider-2.0.1.tgz#fc44ccb444a2ca5d8309dad8a061dab16b61b070"
-  integrity sha512-EuAQ8nuGK5Rp7pGGQ2Bo8RGxr+PinUNNUeYoOmXwhqM2aoyyNX69kbnpy+YRp/QHLm4Wyjnb4HECcjKJN2zYGQ==
-  dependencies:
-    "@apollo/client" "^3.13.8"
-    "@midnight-ntwrk/midnight-js-network-id" "2.0.1"
-    "@midnight-ntwrk/midnight-js-types" "2.0.1"
-    buffer "^6.0.3"
-    cross-fetch "^4.0.0"
-    graphql "^16.8.0"
-    graphql-ws "^6.0.0"
-    isomorphic-ws "^5.0.0"
-    rxjs "^7.5.0"
-    ws "^8.14.2"
-    zen-observable-ts "^1.1.0"
 
 "@midnight-ntwrk/midnight-js-indexer-public-data-provider@2.0.2":
   version "2.0.2"
@@ -740,20 +694,6 @@
     ws "^8.14.2"
     zen-observable-ts "^1.1.0"
 
-"@midnight-ntwrk/midnight-js-level-private-state-provider@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-level-private-state-provider/-/midnight-js-level-private-state-provider-2.0.1.tgz#9f275ab11ee053a2f2929e7770a1dbcc0bea7667"
-  integrity sha512-EL14dTx/esnU6gs99/NMv8MsIwk150+4q+vJMs/dk0zAx8IPqNR68qmK1qDqHsI97Shdibn9TM2c+FnG0jozwA==
-  dependencies:
-    "@midnight-ntwrk/midnight-js-types" "2.0.1"
-    abstract-level "^2.0.0"
-    buffer "^6.0.3"
-    fp-ts "^2.16.1"
-    io-ts "^2.2.20"
-    level "^9.0.0"
-    lodash "^4.17.21"
-    superjson "^2.0.0"
-
 "@midnight-ntwrk/midnight-js-level-private-state-provider@2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-level-private-state-provider/-/midnight-js-level-private-state-provider-2.0.2.tgz#f60b219daa50a879a4d0a238df36630d0bc9e6ad"
@@ -768,11 +708,6 @@
     lodash "^4.17.21"
     superjson "^2.0.0"
 
-"@midnight-ntwrk/midnight-js-network-id@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-network-id/-/midnight-js-network-id-2.0.1.tgz#453b31fbaddfbd0ae24ec4773fb6799f3495c2c1"
-  integrity sha512-+44m2asyD4SeQ7tNl1y0ZaVEuuRFaKk8iwrdoU5gigVyg0RnHPi1Dn6FfDsWqb+Sdb9Zm7gawzysz5/Zj+/uug==
-
 "@midnight-ntwrk/midnight-js-network-id@2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-network-id/-/midnight-js-network-id-2.0.2.tgz#fec73647d08eb664f8fdac8fd627d8b9ded2dfdb"
@@ -785,24 +720,12 @@
   dependencies:
     "@midnight-ntwrk/midnight-js-types" "2.0.2"
 
-"@midnight-ntwrk/midnight-js-types@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-types/-/midnight-js-types-2.0.1.tgz#da9de5e8cf987659e4c11a828f65b4d89da32bf2"
-  integrity sha512-6/GWE7QrtI8J5WMfNt9tBXgV+lUcFCBe0JuZSowhzQbQ9sGuYSlS+NxWmLCSUG+P2Ggum6WOmGQq14zuJGX/gg==
-  dependencies:
-    rxjs "^7.5.0"
-
 "@midnight-ntwrk/midnight-js-types@2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-types/-/midnight-js-types-2.0.2.tgz#c40083724d6a2d1ae7d47a9145429c3bbbb59c61"
   integrity sha512-ewHBQRCvY8u0+JAGdjQ86KsyoTA3dbNBLkuZ1o5U6vU/1jFjnFA1FL9skTgdXzSKjjfwA930i+OvbaUaUzFEHQ==
   dependencies:
     rxjs "^7.5.0"
-
-"@midnight-ntwrk/midnight-js-utils@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@midnight-ntwrk/midnight-js-utils/-/midnight-js-utils-2.0.1.tgz#5d2b3252a73af46071535f5a590f0b09e30ae1fb"
-  integrity sha512-HLiEWDCUQKa7bvdmWWQS41a6n589WYEBkR+cm7WXjm6W3NIXhATEAXJEksONj5g+IVSZOUZzPuJkAEugCekL2g==
 
 "@midnight-ntwrk/midnight-js-utils@2.0.2":
   version "2.0.2"

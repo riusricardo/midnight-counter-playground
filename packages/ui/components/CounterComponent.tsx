@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { CounterAPI, type CounterState } from '@repo/counter-api';
+import { CounterAPI, type CounterState } from '@repo/counter-api/unified-api';
 import { type CounterPrivateState } from '@midnight-ntwrk/counter-contract';
 
 interface CounterProviderProps {

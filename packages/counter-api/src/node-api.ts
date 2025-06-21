@@ -16,7 +16,15 @@ import * as Rx from 'rxjs';
 import * as env from './env.js';
 import { WalletBuilder, type Resource } from '@midnight-ntwrk/wallet';
 import type { Wallet } from '@midnight-ntwrk/wallet-api';
-import { type Config } from './config.js';
+import { type Config, contractConfig, StandaloneConfig } from './config.js';
+import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
+import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
+import {
+  type CounterPrivateStateId,
+  type CounterProviders,
+  type DeployedCounterContract,
+} from './common-types.js';
+import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 
 // Node.js specific random bytes function
 export const randomBytes = (length: number): Uint8Array => {
@@ -24,6 +32,25 @@ export const randomBytes = (length: number): Uint8Array => {
   webcrypto.getRandomValues(bytes);
   return bytes;
 };
+
+export const configureProviders = async (
+  wallet: any, // Wallet & Resource,
+  config: Config,
+  zkConfigProvider: any // Should be ZKConfigProvider<'increment'>, but kept as any for flexibility
+): Promise<CounterProviders> => {
+  const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
+  return {
+    privateStateProvider: levelPrivateStateProvider<typeof CounterPrivateStateId>({
+      privateStateStoreName: contractConfig.privateStateStoreName,
+    }) as any,  // Type assertion to bypass strict typing
+    publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
+    zkConfigProvider: zkConfigProvider as any, // injected
+    proofProvider: httpClientProofProvider(config.proofServer) as any,
+    walletProvider: walletAndMidnightProvider as any,
+    midnightProvider: walletAndMidnightProvider as any,
+  } as CounterProviders;
+};
+
 
 export const createWalletAndMidnightProvider = async (wallet: Wallet): Promise<WalletProvider & any> => {
   const state = await Rx.firstValueFrom(wallet.state());
@@ -229,3 +256,5 @@ export const isAnotherChain = async (wallet: Wallet, offset: number) => {
     return false;
   }
 };
+
+export { type CounterProviders, type DeployedCounterContract, type Config, StandaloneConfig };

@@ -1,7 +1,7 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "include": ["src/**/*.ts"],
-  "exclude": ["dist", "node_modules", "src/api.ts", "src/api-ui.ts"], //TODO: delete files when not needed
+  "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",

@@ -10,11 +10,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
+    },    
+    "./node-api": {
+      "types": "./dist/node-api.d.ts",
+      "import": "./dist/node-api.js",
+      "require": "./dist/node-api.js"
     },
-    "./api-ui": {
-      "types": "./dist/api-ui.d.ts",
-      "import": "./dist/api-ui.js",
-      "require": "./dist/api-ui.js"
+    "./unified-api": {
+      "types": "./dist/unified-api.d.ts",
+      "import": "./dist/unified-api.js",
+      "require": "./dist/unified-api.js"
     },
     "./src/env-browser.ts": "./src/env-browser.ts",
     "./dist/env-browser": {

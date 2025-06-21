@@ -19,22 +19,18 @@ import { stdin as input, stdout as output } from 'node:process';
 import { createInterface, type Interface } from 'node:readline/promises';
 import { type Logger } from 'pino';
 import { type StartedDockerComposeEnvironment, type DockerComposeEnvironment } from 'testcontainers';
-import { 
-  type CounterProviders, 
+import {
+  type CounterProviders,
   type DeployedCounterContract,
-  type Config, 
+  type Config,
   StandaloneConfig,
-  // Import all API functions
-  setLogger,
-  joinContract,
-  deploy,
-  increment,
-  displayCounterValue,
   buildWalletAndWaitForFunds,
   buildFreshWallet,
   configureProviders,
-  saveState
-} from '@repo/counter-api';
+  saveState,
+} from '@repo/counter-api/node-api';
+import { setLogger, joinContract, deploy, increment, displayCounterValue } from '@repo/counter-api/unified-api';
+
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import { contractConfig } from '@repo/counter-api';
 
