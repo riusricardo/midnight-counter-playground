@@ -24,7 +24,7 @@ import { connectToWallet } from './connectToWallet';
 import { noopProofClient, proofClient } from './proofClient';
 import { WrappedPublicDataProvider } from './publicDataProvider';
 import { WrappedPrivateStateProvider } from './privateStateProvider';
-import { CachedFetchZkConfigProvider } from './zkConfigProvider';
+import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
 
 // Replace isChromeBrowser and window/fetch usages with safe checks for build/SSR
 function isChromeBrowser(): boolean {
@@ -135,16 +135,27 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
 
   // Provide a no-op fallback for zkConfigProvider
   const emptyZkConfigProvider: ZKConfigProvider<CounterCircuits> = {
-    getZKIR: async () => { throw new Error('Not implemented'); },
-    getProverKey: async () => { throw new Error('Not implemented'); },
-    getVerifierKey: async () => { throw new Error('Not implemented'); },
-    getVerifierKeys: async () => { throw new Error('Not implemented'); },
-    get: async () => { throw new Error('Not implemented'); },
+    getZKIR: async () => {
+      throw new Error('Not implemented');
+    },
+    getProverKey: async () => {
+      throw new Error('Not implemented');
+    },
+    getVerifierKey: async () => {
+      throw new Error('Not implemented');
+    },
+    getVerifierKeys: async () => {
+      throw new Error('Not implemented');
+    },
+    get: async () => {
+      throw new Error('Not implemented');
+    },
   };
   const zkConfigProvider = useMemo(
-    () => (typeof window !== 'undefined' && typeof fetch !== 'undefined')
-      ? new CachedFetchZkConfigProvider<CounterCircuits>(window.location.origin, fetch.bind(window), providerCallback)
-      : emptyZkConfigProvider,
+    () =>
+      typeof window !== 'undefined' && typeof fetch !== 'undefined'
+        ? new FetchZkConfigProvider<CounterCircuits>(window.location.origin, fetch.bind(window))
+        : emptyZkConfigProvider,
     [],
   );
 
