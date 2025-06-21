@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
 import { Counter, witnesses, type CounterPrivateState } from '@midnight-ntwrk/counter-contract';
-import { type Logger } from 'pino';
 import { map, type Observable, retry } from 'rxjs';
 import {
   type CounterContract,
@@ -27,8 +26,7 @@ export interface CounterState {
 export class CounterAPI implements DeployedCounterAPI {
   private constructor(
     public readonly deployedContract: DeployedCounterContract,
-    public readonly providers: CounterProviders,
-    private readonly logger: Logger,
+    public readonly providers: CounterProviders
   ) {
     this.deployedContractAddress = deployedContract.deployTxData.public.contractAddress;
     this.state$ = this.providers.publicDataProvider
@@ -48,13 +46,13 @@ export class CounterAPI implements DeployedCounterAPI {
   readonly state$: Observable<CounterState>;
 
   async increment(): Promise<void> {
-    this.logger.info('Incrementing counter...');
+    console.log('Incrementing counter...');
     const finalizedTxData = await this.deployedContract.callTx.increment();
-    this.logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
+    console.log(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   }
 
   async getCounterValue(): Promise<bigint> {
-    this.logger.info('Getting counter value...');
+    console.log('Getting counter value...');
     const state = await this.providers.publicDataProvider.queryContractState(this.deployedContractAddress);
     if (state === null) {
       return BigInt(0);
@@ -64,32 +62,41 @@ export class CounterAPI implements DeployedCounterAPI {
 
   static async deploy(
     providers: CounterProviders,
-    logger: Logger,
+    privateState: CounterPrivateState,
   ): Promise<CounterAPI> {
-    logger.info('Deploying counter contract...');
+    console.log('Deploying counter contract...');
     const deployedContract = await deployContract(providers, {
       contract: counterContract,
       privateStateId: 'counterPrivateState',
-      initialPrivateState: { value: 0 },
+      initialPrivateState: privateState,
     });
-    logger.info(`Deployed contract at address: ${deployedContract.deployTxData.public.contractAddress}`);
-    return new CounterAPI(deployedContract as unknown as DeployedCounterContract, providers, logger);
+    console.log(`Deployed contract at address: ${deployedContract.deployTxData.public.contractAddress}`);
+    return new CounterAPI(deployedContract as unknown as DeployedCounterContract, providers);
   }
 
   static async subscribe(
     providers: CounterProviders,
     contractAddress: ContractAddress,
-    logger: Logger,
   ): Promise<CounterAPI> {
-    logger.info(`Subscribing to counter contract at ${contractAddress}...`);
-    const deployedContract = await findDeployedContract(providers, {
-      contractAddress,
-      contract: counterContract,
-      privateStateId: 'counterPrivateState',
-      initialPrivateState: { value: 0 },
-    });
-    logger.info('Successfully subscribed to contract');
-    return new CounterAPI(deployedContract as unknown as DeployedCounterContract, providers, logger);
+    console.log(`Subscribing to counter contract at ${contractAddress}...`);
+    try {
+      const deployedContract = await findDeployedContract(providers, {
+        contractAddress,
+        contract: counterContract,
+        privateStateId: 'counterPrivateState',
+        initialPrivateState: { value: 0 },
+      });
+      console.log('Successfully subscribed to contract');
+      return new CounterAPI(deployedContract as unknown as DeployedCounterContract, providers);
+    } catch (error) {
+      console.error('Error subscribing to contract:', error);
+      // If there's a verifier key mismatch, it might be because the contract was deployed with different parameters
+      // Try to provide a more helpful error message
+      if (error instanceof Error && error.message.includes('verifier key')) {
+        throw new Error(`Unable to connect to contract at ${contractAddress}. This contract may have been deployed with different circuit parameters or is not a compatible counter contract. Original error: ${error.message}`);
+      }
+      throw error;
+    }
   }
 
   static async contractExists(providers: CounterProviders, contractAddress: ContractAddress): Promise<boolean> {
@@ -102,6 +109,19 @@ export class CounterAPI implements DeployedCounterAPI {
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  static async getCounterValueDirect(providers: CounterProviders, contractAddress: ContractAddress): Promise<bigint> {
+    try {
+      const state = await providers.publicDataProvider.queryContractState(contractAddress);
+      if (state === null) {
+        throw new Error('Contract state not found');
+      }
+      return Counter.ledger(state.data).round;
+    } catch (error) {
+      console.error('Error reading counter value directly:', error);
+      throw new Error(`Unable to read counter value from contract at ${contractAddress}. The contract may not be a valid counter contract or may be incompatible.`);
     }
   }
 }

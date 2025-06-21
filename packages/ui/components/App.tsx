@@ -1,6 +1,7 @@
-import React from 'react';
+/* eslint-disable prettier/prettier */
+import React, { useState } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
-import { ThemeProvider, Container, Box, Typography, Paper } from '@mui/material';
+import { ThemeProvider, Container, Box, Typography, Paper, Tabs, Tab } from '@mui/material';
 import { theme } from '../config/theme.js';
 import { LocalStateProvider } from '../contexts/LocalStateProviderContext.js';
 import { RuntimeConfigurationProvider, useRuntimeConfiguration } from '../config/RuntimeConfiguration.js';
@@ -8,10 +9,16 @@ import { MidnightWalletProvider, useMidnightWallet } from './MidnightWallet.js';
 import * as pino from 'pino';
 import { type NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { CounterApplication } from './CounterComponent.js';
+import { CounterReaderApplication } from './CounterReaderComponent.js';
 import { type Logger } from 'pino';
 
 const CounterAppContent: React.FC<{ logger: Logger }> = ({ logger }) => {
   const walletState = useMidnightWallet();
+  const [tabValue, setTabValue] = useState(0);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -24,7 +31,14 @@ const CounterAppContent: React.FC<{ logger: Logger }> = ({ logger }) => {
       <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {walletState.isConnected ? (
           <Paper elevation={3} sx={{ p: 3, width: '100%', maxWidth: 600 }}>
-            <CounterApplication providers={walletState.providers as any} logger={logger} />
+            <Tabs value={tabValue} onChange={handleTabChange} centered sx={{ mb: 3 }}>
+              <Tab label="Deploy & Manage" />
+              <Tab label="Read Existing Contract" />
+            </Tabs>
+            
+            {tabValue === 0 && <CounterApplication providers={walletState.providers as any} />}
+
+            {tabValue === 1 && <CounterReaderApplication providers={walletState.providers as any} />}
           </Paper>
         ) : (
           <Paper elevation={3} sx={{ p: 3, width: '100%', maxWidth: 600, textAlign: 'center' }}>

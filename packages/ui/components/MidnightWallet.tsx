@@ -1,3 +1,4 @@
+/* global console */
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Logger } from 'pino';
 import { type Address, type CoinPublicKey } from '@midnight-ntwrk/wallet-api';
@@ -284,6 +285,7 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
     try {
       const reqState = await walletResult.wallet.state();
       setAddress(reqState.address);
+      console.log('Connected wallet address:', reqState.address);
       setWalletAPI({
         wallet: walletResult.wallet,
         coinPublicKey: reqState.coinPublicKey,

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
 import { CounterAPI, type CounterState } from '@repo/counter-api/api-ui';
-import { type Logger } from 'pino';
+import { type CounterPrivateState } from '@midnight-ntwrk/counter-contract';
 
 interface CounterProviderProps {
   contractAddress: ContractAddress;
   providers: any; // CounterProviders would be imported from counter-api
-  logger: Logger;
   children: React.ReactNode;
 }
 
@@ -34,7 +33,7 @@ export const useCounter = () => {
   return context;
 };
 
-export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddress, providers, logger, children }) => {
+export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddress, providers, children }) => {
   const [counterApi, setCounterApi] = useState<CounterAPI | null>(null);
   const [counterState, setCounterState] = useState<CounterState | null>(null);
   const [counterValue, setCounterValue] = useState<bigint | null>(null);
@@ -53,7 +52,7 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
         }
 
         // Subscribe to the counter contract
-        const api = await CounterAPI.subscribe(providers, contractAddress, logger);
+        const api = await CounterAPI.subscribe(providers, contractAddress);
 
         setCounterApi(api);
 
@@ -69,7 +68,6 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
           },
           error: (err: Error) => {
             setError(err);
-            logger.error('Error in counter state subscription:', err);
           },
         });
 
@@ -81,12 +79,11 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
       } catch (err) {
         setIsLoading(false);
         setError(err instanceof Error ? err : new Error('Unknown error initializing counter'));
-        logger.error('Failed to initialize counter:', err);
       }
     };
 
     initCounter();
-  }, [contractAddress, providers, logger]);
+  }, [contractAddress, providers]);
 
   const incrementCounter = async () => {
     if (!counterApi) {
@@ -99,7 +96,6 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
       // The state$ observable will update the UI
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to increment counter'));
-      logger.error('Error incrementing counter:', err);
     }
   };
 
@@ -141,35 +137,95 @@ export const CounterDisplay: React.FC = () => {
 };
 
 export const DeployCounterButton: React.FC<{
-  providers: any; // CounterProviders
-  logger: Logger;
+  providers: any;
   onDeployed: (contractAddress: ContractAddress) => void;
-}> = ({ providers, logger, onDeployed }) => {
+}> = ({ providers, onDeployed }) => {
   const [isDeploying, setIsDeploying] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [deploymentProgress, setDeploymentProgress] = useState<string>('');
 
   const deployCounter = async () => {
     try {
       setIsDeploying(true);
       setError(null);
+      setDeploymentProgress('Preparing deployment...');
 
-      const counterApi = await CounterAPI.deploy(providers, logger);
+      // Validate that we have the necessary providers
+      if (!providers || !providers.publicDataProvider || !providers.privateStateProvider) {
+        throw new Error('Missing required providers for deployment');
+      }
 
-      onDeployed(counterApi.deployedContractAddress);
+      setDeploymentProgress('Deploying counter contract...');
+
+      // Use deploy function from api.ts with proper parameters
+      const initialPrivateState: CounterPrivateState = { value: 0 };
+      const deployedContract = await CounterAPI.deploy(providers, initialPrivateState);
+
+      if (!deployedContract || !deployedContract.deployedContractAddress) {
+        throw new Error('Deployment succeeded but failed to get contract address');
+      }
+
+      const contractAddress = deployedContract.deployedContractAddress;
+      setDeploymentProgress('Deployment successful!');
+
+      onDeployed(contractAddress);
       setIsDeploying(false);
+      setDeploymentProgress('');
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to deploy counter contract'));
-      logger.error('Error deploying counter contract:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to deploy counter contract';
+      setError(new Error(errorMessage));
       setIsDeploying(false);
+      setDeploymentProgress('');
     }
   };
 
   return (
     <div className="deploy-counter-container">
-      <button className="deploy-button" onClick={deployCounter} disabled={isDeploying}>
+      <button
+        className="deploy-button"
+        onClick={deployCounter}
+        disabled={isDeploying}
+        style={{
+          padding: '12px 24px',
+          fontSize: '16px',
+          backgroundColor: isDeploying ? '#cccccc' : '#1976d2',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: isDeploying ? 'not-allowed' : 'pointer',
+        }}
+      >
         {isDeploying ? 'Deploying...' : 'Deploy New Counter Contract'}
       </button>
-      {error && <div className="error-message">Error: {error.message}</div>}
+
+      {deploymentProgress && (
+        <div
+          className="deployment-progress"
+          style={{
+            marginTop: '8px',
+            color: '#1976d2',
+            fontWeight: 'bold',
+          }}
+        >
+          {deploymentProgress}
+        </div>
+      )}
+
+      {error && (
+        <div
+          className="error-message"
+          style={{
+            marginTop: '8px',
+            color: '#d32f2f',
+            padding: '8px',
+            backgroundColor: '#ffebee',
+            borderRadius: '4px',
+            border: '1px solid #ffcdd2',
+          }}
+        >
+          Error: {error.message}
+        </div>
+      )}
     </div>
   );
 };
@@ -178,26 +234,15 @@ export const DeployCounterButton: React.FC<{
 export const CounterApplication: React.FC<{
   contractAddress?: ContractAddress;
   providers: any; // CounterProviders
-  logger: Logger;
-}> = ({ contractAddress, providers, logger }) => {
+}> = ({ contractAddress, providers }) => {
   const [deployedAddress, setDeployedAddress] = useState<ContractAddress | undefined>(contractAddress);
-  
+
   if (!deployedAddress) {
-    return (
-      <DeployCounterButton 
-        providers={providers}
-        logger={logger}
-        onDeployed={(address) => setDeployedAddress(address)}
-      />
-    );
+    return <DeployCounterButton providers={providers} onDeployed={(address) => setDeployedAddress(address)} />;
   }
-  
+
   return (
-    <CounterProvider 
-      contractAddress={deployedAddress} 
-      providers={providers}
-      logger={logger}
-    >
+    <CounterProvider contractAddress={deployedAddress} providers={providers}>
       <CounterDisplay />
     </CounterProvider>
   );

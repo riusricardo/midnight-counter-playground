@@ -33,7 +33,6 @@ import {
 } from '@midnight-ntwrk/midnight-js-types';
 import { Transaction as ZswapTransaction } from '@midnight-ntwrk/zswap';
 import { webcrypto } from 'crypto';
-import { type Logger } from 'pino';
 import * as Rx from 'rxjs';
 import {
   type CounterContract,
@@ -49,18 +48,16 @@ import * as env from './env.js';
 import { WalletBuilder, type Resource } from '@midnight-ntwrk/wallet';
 import type { Wallet } from '@midnight-ntwrk/wallet-api';
 
-let logger: Logger;
-
 export const getCounterLedgerState = async (
   providers: CounterProviders,
   contractAddress: ContractAddress,
 ): Promise<bigint | null> => {
   assertIsContractAddress(contractAddress);
-  logger.info('Checking contract ledger state...');
+  console.log('Checking contract ledger state...');
   const state = await providers.publicDataProvider
     .queryContractState(contractAddress)
     .then((contractState) => (contractState != null ? Counter.ledger(contractState.data).round : null));
-  logger.info(`Ledger state: ${state}`);
+  console.log(`Ledger state: ${state}`);
   return state;
 };
 
@@ -73,7 +70,7 @@ export const joinContract = async (providers: CounterProviders, contractAddress:
     privateStateId: 'counterPrivateState',
     initialPrivateState: { value: 0 },
   });
-  logger.info(`Joined contract at address: ${counterContract.deployTxData.public.contractAddress}`);
+  console.log(`Joined contract at address: ${counterContract.deployTxData.public.contractAddress}`);
   return counterContract;
 };
 
@@ -81,20 +78,20 @@ export const deploy = async (
   providers: CounterProviders,
   privateState: CounterPrivateState,
 ): Promise<DeployedCounterContract> => {
-  logger.info('Deploying counter contract...');
+  console.log('Deploying counter contract...');
   const counterContract = await deployContract(providers, {
     contract: counterContractInstance,
     privateStateId: 'counterPrivateState',
     initialPrivateState: privateState,
   });
-  logger.info(`Deployed contract at address: ${counterContract.deployTxData.public.contractAddress}`);
+  console.log(`Deployed contract at address: ${counterContract.deployTxData.public.contractAddress}`);
   return counterContract;
 };
 
 export const increment = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
-  logger.info('Incrementing...');
+  console.log('Incrementing...');
   const finalizedTxData = await counterContract.callTx.increment();
-  logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
+  console.log(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
 };
 
@@ -105,9 +102,9 @@ export const displayCounterValue = async (
   const contractAddress = counterContract.deployTxData.public.contractAddress;
   const counterValue = await getCounterLedgerState(providers, contractAddress);
   if (counterValue === null) {
-    logger.info(`There is no counter contract deployed at ${contractAddress}.`);
+    console.log(`There is no counter contract deployed at ${contractAddress}.`);
   } else {
-    logger.info(`Current counter value: ${Number(counterValue)}`);
+    console.log(`Current counter value: ${Number(counterValue)}`);
   }
   return { contractAddress, counterValue };
 };
@@ -137,7 +134,7 @@ export const waitForSync = (wallet: Wallet) =>
       Rx.tap((state: any) => {
         const applyGap = state.syncProgress?.lag.applyGap ?? 0n;
         const sourceGap = state.syncProgress?.lag.sourceGap ?? 0n;
-        logger.info(
+        console.log(
           `Waiting for funds. Backend lag: ${sourceGap}, wallet lag: ${applyGap}, transactions=${state.transactionHistory.length}`,
         );
       }),
@@ -155,7 +152,7 @@ export const waitForSyncProgress = async (wallet: Wallet) =>
       Rx.tap((state: any) => {
         const applyGap = state.syncProgress?.lag.applyGap ?? 0n;
         const sourceGap = state.syncProgress?.lag.sourceGap ?? 0n;
-        logger.info(
+        console.log(
           `Waiting for funds. Backend lag: ${sourceGap}, wallet lag: ${applyGap}, transactions=${state.transactionHistory.length}`,
         );
       }),
@@ -173,7 +170,7 @@ export const waitForFunds = (wallet: Wallet) =>
       Rx.tap((state: any) => {
         const applyGap = state.syncProgress?.lag.applyGap ?? 0n;
         const sourceGap = state.syncProgress?.lag.sourceGap ?? 0n;
-        logger.info(
+        console.log(
           `Waiting for funds. Backend lag: ${sourceGap}, wallet lag: ${applyGap}, transactions=${state.transactionHistory.length}`,
         );
       }),
@@ -195,7 +192,7 @@ export const buildWalletAndWaitForFunds = async (
   let wallet: Wallet & Resource;
   if (directoryPath !== undefined) {
     if (env.existsSync(`${directoryPath}/${filename}`)) {
-      logger.info(`Attempting to restore state from ${directoryPath}/${filename}`);
+      console.log(`Attempting to restore state from ${directoryPath}/${filename}`);
       try {
         const serializedStream = env.createReadStream(`${directoryPath}/${filename}`);
         const serialized = await streamToString(serializedStream);
@@ -206,7 +203,7 @@ export const buildWalletAndWaitForFunds = async (
         wallet.start();
         const stateObject = JSON.parse(serialized);
         if ((await isAnotherChain(wallet, Number(stateObject.offset))) === true) {
-          logger.warn('The chain was reset, building wallet from scratch');
+          console.log('The chain was reset, building wallet from scratch');
           wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
           wallet.start();
         } else {
@@ -214,49 +211,49 @@ export const buildWalletAndWaitForFunds = async (
           // allow for situations when there's no new index in the network between runs
           const typedState = newState as any;
           if (typedState.syncProgress?.synced) {
-            logger.info('Wallet was able to sync from restored state');
+            console.log('Wallet was able to sync from restored state');
           } else {
-            logger.info(`Offset: ${stateObject.offset}`);
-            logger.info(`SyncProgress.lag.applyGap: ${typedState.syncProgress?.lag.applyGap}`);
-            logger.info(`SyncProgress.lag.sourceGap: ${typedState.syncProgress?.lag.sourceGap}`);
-            logger.warn('Wallet was not able to sync from restored state, building wallet from scratch');
+            console.log(`Offset: ${stateObject.offset}`);
+            console.log(`SyncProgress.lag.applyGap: ${typedState.syncProgress?.lag.applyGap}`);
+            console.log(`SyncProgress.lag.sourceGap: ${typedState.syncProgress?.lag.sourceGap}`);
+            console.log('Wallet was not able to sync from restored state, building wallet from scratch');
             wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
             wallet.start();
           }
         }
       } catch (error: unknown) {
         if (typeof error === 'string') {
-          logger.error(error);
+          console.log(error);
         } else if (error instanceof Error) {
-          logger.error(error.message);
+          console.log(error.message);
         } else {
-          logger.error(error);
+          console.log(error);
         }
-        logger.warn('Wallet was not able to restore using the stored state, building wallet from scratch');
+        console.log('Wallet was not able to restore using the stored state, building wallet from scratch');
         wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
         wallet.start();
       }
     } else {
-      logger.info('Wallet save file not found, building wallet from scratch');
+      console.log('Wallet save file not found, building wallet from scratch');
       wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
       wallet.start();
     }
   } else {
-    logger.info('File path for save file not found, building wallet from scratch');
+    console.log('File path for save file not found, building wallet from scratch');
     wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
     wallet.start();
   }
 
   const state = await Rx.firstValueFrom(wallet.state());
-  logger.info(`Your wallet seed is: ${seed}`);
-  logger.info(`Your wallet address is: ${(state as any).address}`);
+  console.log(`Your wallet seed is: ${seed}`);
+  console.log(`Your wallet address is: ${(state as any).address}`);
   let balance = (state as any).balances[nativeToken()];
   if (balance === undefined || balance === 0n) {
-    logger.info(`Your wallet balance is: 0`);
-    logger.info(`Waiting to receive tokens...`);
+    console.log(`Your wallet balance is: 0`);
+    console.log(`Waiting to receive tokens...`);
     balance = await waitForFunds(wallet);
   }
-  logger.info(`Your wallet balance is: ${balance}`);
+  console.log(`Your wallet balance is: ${balance}`);
   return wallet;
 };
 
@@ -287,35 +284,35 @@ export const configureProviders = async (
   };
 };
 
-export function setLogger(_logger: Logger) {
-  logger = _logger;
+export function setLogger(_logger: any) {
+  // Logger functionality replaced with console.log
 }
 
 export const saveState = async (wallet: Wallet, filename: string) => {
   const directoryPath = process.env.SYNC_CACHE;
   if (directoryPath !== undefined) {
-    logger.info(`Saving state in ${directoryPath}/${filename}`);
+    console.log(`Saving state in ${directoryPath}/${filename}`);
     try {
       await env.mkdir(directoryPath, { recursive: true });
       const serializedState = await wallet.serializeState();
       const writer = env.createWriteStream(`${directoryPath}/${filename}`);
       writer.write(serializedState);
       writer.on('finish', function () {
-        logger.info(`File '${directoryPath}/${filename}' written successfully.`);
+        console.log(`File '${directoryPath}/${filename}' written successfully.`);
       });
       writer.on('error', function (err) {
-        logger.error(err);
+        console.log(err);
       });
       writer.end();
     } catch (e) {
       if (typeof e === 'string') {
-        logger.warn(e);
+        console.log(e);
       } else if (e instanceof Error) {
-        logger.warn(e.message);
+        console.log(e.message);
       }
     }
   } else {
-    logger.info('Not saving cache as sync cache was not defined');
+    console.log('Not saving cache as sync cache was not defined');
   }
 };
 
@@ -337,10 +334,10 @@ export const isAnotherChain = async (wallet: Wallet, offset: number) => {
   // Here wallet does not expose the offset block it is synced to, that is why this workaround
   const walletOffset = Number(JSON.parse(await wallet.serializeState()).offset);
   if (walletOffset < offset - 1) {
-    logger.info(`Your offset offset is: ${walletOffset} restored offset: ${offset} so it is another chain`);
+    console.log(`Your offset offset is: ${walletOffset} restored offset: ${offset} so it is another chain`);
     return true;
   } else {
-    logger.info(`Your offset offset is: ${walletOffset} restored offset: ${offset} ok`);
+    console.log(`Your offset offset is: ${walletOffset} restored offset: ${offset} ok`);
     return false;
   }
 };

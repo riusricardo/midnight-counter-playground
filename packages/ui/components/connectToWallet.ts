@@ -1,3 +1,4 @@
+/* global console */
 import type { Logger } from 'pino';
 import type { DAppConnectorAPI, DAppConnectorWalletAPI, ServiceUriConfig } from '@midnight-ntwrk/dapp-connector-api';
 import { concatMap, filter, firstValueFrom, interval, map, of, take, tap, throwError, timeout } from 'rxjs';
@@ -81,7 +82,6 @@ export const connectToWallet = (logger: Logger): Promise<{ wallet: DAppConnector
         const uris = await connectorAPI.serviceUriConfig();
 
         logger.info('Connected to wallet connector API and retrieved service configuration');
-
         return { wallet: walletConnectorAPI, uris };
       }),
     ),
