@@ -5,6 +5,7 @@ import { Counter, witnesses, type CounterPrivateState } from '@midnight-ntwrk/co
 import { map, type Observable, retry } from 'rxjs';
 import {
   type CounterContract,
+  type CounterPrivateStateId,
   type CounterProviders,
   type DeployedCounterContract,
 } from './common-types.js';

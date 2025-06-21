@@ -1,7 +1,7 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "include": ["src/**/*.ts"],
-  "exclude": ["dist", "node_modules"],
+  "exclude": ["dist", "node_modules", "src/api.ts", "src/api-ui.ts"], //TODO: delete files when not needed
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
@@ -9,7 +9,7 @@
     "lib": ["ESNext"],
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,

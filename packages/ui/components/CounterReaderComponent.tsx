@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { CounterAPI, type CounterProviders } from '@repo/counter-api/api-ui';
+import { CounterAPI, type CounterProviders } from '@repo/counter-api';
 
 interface CounterReaderProviderProps {
   contractAddress: ContractAddress;

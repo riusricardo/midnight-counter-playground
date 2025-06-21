@@ -24,7 +24,7 @@ export default defineConfig({
           process: 'process',
         }),
       ],
-      external: ['@midnight-ntwrk/midnight-js-node-zk-config-provider'],
+      external: ['@midnight-ntwrk/midnight-js-node-zk-config-provider', 'fetch-blob', 'node-domexception', 'formdata-polyfill'],
     },
   },
   plugins: [
@@ -43,6 +43,10 @@ export default defineConfig({
       // Whether to polyfill Node.js builtins
       protocolImports: true,
       include: ['util', 'buffer', 'stream', 'events', 'path', 'querystring', 'url', 'fs', 'crypto', 'os'],
+      // Fix stream-browserify polyfill issues
+      overrides: {
+        stream: 'stream-browserify',
+      },
     }),
   ],
   optimizeDeps: {
@@ -53,7 +57,7 @@ export default defineConfig({
       },
     },
     include: ['@repo/counter-api'],
-    exclude: ['@midnight-ntwrk/counter-contract', 'node-fetch'],
+    exclude: ['@midnight-ntwrk/counter-contract', 'node-fetch', 'fetch-blob', 'node-domexception'],
   },
   resolve: {
     alias: {
@@ -66,6 +70,12 @@ export default defineConfig({
       'node:crypto': stdLibBrowser.crypto,
       'node:path': stdLibBrowser.path,
 
+      // Fix stream polyfill issues
+      stream: 'stream-browserify',
+      'stream/web': 'web-streams-polyfill/dist/ponyfill.es2018.js',
+      'stream-browserify/web': 'web-streams-polyfill/dist/ponyfill.es2018.js',
+      'node:stream/web': 'web-streams-polyfill/dist/ponyfill.es2018.js',
+
       // Environment Abstraction Layer Aliases
       //
       // These aliases ensure that browser builds use browser-compatible implementations
@@ -73,9 +83,11 @@ export default defineConfig({
       // for file system operations and other Node.js APIs.
       //
       // See: packages/counter-api/src/env-browser.ts for implementation details
-      '@repo/counter-api/src/env': '@repo/counter-api/src/env-browser.ts',
-      '@repo/counter-api/dist/env': '@repo/counter-api/src/env-browser.ts',
-      '@repo/counter-api/dist/env-node': '@repo/counter-api/src/env-browser.ts',
+      '@repo/counter-api/src/env': '@repo/counter-api/dist/env-browser',
+      '@repo/counter-api/dist/env': '@repo/counter-api/dist/env-browser',
+      '@repo/counter-api/dist/env-node': '@repo/counter-api/dist/env-browser',
+      './env-node.js': '@repo/counter-api/dist/env-browser',
+      './env-node': '@repo/counter-api/dist/env-browser',
       // fs/promises is intentionally not polyfilled for browser
     },
   },

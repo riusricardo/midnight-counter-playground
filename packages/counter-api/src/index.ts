@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './api.js';
+// Export unified API for React compatibility
+export * from './unified-api.js';
 export * from './config.js';
 export * from './common-types.js';
-export { CounterAPI, type CounterState } from './api-ui.js';
