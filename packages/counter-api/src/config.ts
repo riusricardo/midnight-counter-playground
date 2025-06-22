@@ -30,10 +30,20 @@ function findWorkspaceRoot(startDir: string): string {
     try {
       if (fs.existsSync(packageJsonPath)) {
         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-        // Check if this is the workspace root by looking for workspaces field
-        if (packageJson.workspaces || packageJson.name === 'midnight-counter-app') {
+        // Check if this is the workspace root by looking for workspaces field or specific structure
+        if (packageJson.workspaces || 
+            packageJson.name === 'counter-app' ||
+            packageJson.name === 'midnight-counter-app' ||
+            (packageJson.name && packageJson.name.includes('midnight-app-test'))) {
           return currentDir;
         }
+      }
+      
+      // Also check if this directory contains the packages folder with our expected structure
+      const packagesDir = path.join(currentDir, 'packages');
+      const counterContractDir = path.join(packagesDir, 'counter-contract');
+      if (fs.existsSync(packagesDir) && fs.existsSync(counterContractDir)) {
+        return currentDir;
       }
     } catch (e) {
       // Continue searching
@@ -41,7 +51,19 @@ function findWorkspaceRoot(startDir: string): string {
     currentDir = path.dirname(currentDir);
   }
   
-  // Fallback to current directory
+  // Fallback: try to find workspace root by going up from current directory
+  // This handles cases where we might be deep in a nested structure
+  let fallbackDir = process.cwd();
+  while (fallbackDir !== path.dirname(fallbackDir)) {
+    const packagesDir = path.join(fallbackDir, 'packages');
+    const counterContractDir = path.join(packagesDir, 'counter-contract');
+    if (fs.existsSync(packagesDir) && fs.existsSync(counterContractDir)) {
+      return fallbackDir;
+    }
+    fallbackDir = path.dirname(fallbackDir);
+  }
+  
+  // Final fallback to current directory
   return startDir;
 }
 
