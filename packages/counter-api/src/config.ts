@@ -14,15 +14,42 @@
 // limitations under the License.
 
 import path from 'node:path';
+import fs from 'node:fs';
 import { NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { getDirPath } from './path-resolver.js';
 
 // Get current directory in a way that works in both ESM and CJS
 export const currentDir = getDirPath();
 
+// Find the workspace root by looking for package.json or node_modules
+function findWorkspaceRoot(startDir: string): string {
+  let currentDir = startDir;
+  
+  while (currentDir !== path.dirname(currentDir)) {
+    const packageJsonPath = path.join(currentDir, 'package.json');
+    try {
+      if (fs.existsSync(packageJsonPath)) {
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+        // Check if this is the workspace root by looking for workspaces field
+        if (packageJson.workspaces || packageJson.name === 'midnight-counter-app') {
+          return currentDir;
+        }
+      }
+    } catch (e) {
+      // Continue searching
+    }
+    currentDir = path.dirname(currentDir);
+  }
+  
+  // Fallback to current directory
+  return startDir;
+}
+
+const workspaceRoot = findWorkspaceRoot(currentDir);
+
 export const contractConfig = {
   privateStateStoreName: 'counter-private-state',
-  zkConfigPath: path.resolve(currentDir, '..', 'counter-contract', 'src', 'managed', 'counter'),
+  zkConfigPath: path.resolve(workspaceRoot, 'packages', 'counter-contract', 'src', 'managed', 'counter'),
 };
 
 export interface Config {

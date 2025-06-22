@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { CounterAPI, type CounterState, type CounterProviders } from '@repo/counter-api/unified-api';
+import { CounterAPI, type CounterState, type CounterProviders } from '@repo/counter-api';
 import { type CounterPrivateState } from '@midnight-ntwrk/counter-contract';
 
 interface CounterProviderProps {
@@ -41,6 +41,8 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    
     const initCounter = async () => {
       try {
         setIsLoading(true);
@@ -51,7 +53,7 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
           throw new Error(`Contract at address ${contractAddress} does not exist`);
         }
 
-        // Connect to the counter contract using unified API
+        // Connect to the counter contract using unified API (default returns CounterAPI instance)
         const api = await CounterAPI.connect(providers, contractAddress);
 
         setCounterApi(api);
@@ -73,7 +75,8 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
 
         setIsLoading(false);
 
-        return () => {
+        // Store cleanup function
+        cleanup = () => {
           subscription.unsubscribe();
         };
       } catch (err) {
@@ -82,7 +85,14 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
       }
     };
 
-    initCounter();
+    void initCounter();
+
+    // Cleanup function
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+    };
   }, [contractAddress, providers]);
 
   const incrementCounter = async () => {
@@ -134,7 +144,7 @@ export const CounterDisplay: React.FC = () => {
 };
 
 export const DeployCounterButton: React.FC<{
-  providers: any;
+  providers: CounterProviders;
   onDeployed: (address: ContractAddress) => void;
 }> = ({ providers, onDeployed }) => {
   const [isDeploying, setIsDeploying] = useState(false);
@@ -261,7 +271,7 @@ export const DeployCounterButton: React.FC<{
 // CounterApplication component
 export const CounterApplication: React.FC<{
   contractAddress?: ContractAddress;
-  providers: any; // CounterProviders
+  providers: CounterProviders;
 }> = ({ contractAddress, providers }) => {
   const [deployedAddress, setDeployedAddress] = useState<ContractAddress | undefined>(contractAddress);
 

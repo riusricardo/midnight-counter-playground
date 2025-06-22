@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { CounterAPI, type CounterState, type CounterProviders } from '@repo/counter-api/unified-api';
+import { CounterAPI, type CounterState, type CounterProviders } from '@repo/counter-api';
 
 interface CounterReaderProviderProps {
   contractAddress: ContractAddress;
@@ -66,8 +66,8 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
       }
 
       try {
-        // Try to subscribe to the counter contract for real-time updates
-        const api = await CounterAPI.subscribe(providers, contractAddress);
+        // Try to connect to the counter contract for real-time updates
+        const api = await CounterAPI.connect(providers, contractAddress);
         setCounterApi(api);
         setHasRealtimeUpdates(true);
 

@@ -14,6 +14,6 @@
 // limitations under the License.
 
 export * as Counter from "./managed/counter/contract/index.cjs";
-export * from "./witnesses";
-export type { CounterPrivateState } from "./witnesses";
-export { witnesses } from "./witnesses";
+export * from "./witnesses.js";
+export type { CounterPrivateState } from "./witnesses.js";
+export { witnesses } from "./witnesses.js";
