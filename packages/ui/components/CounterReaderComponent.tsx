@@ -95,7 +95,7 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
         // Use console for debugging - logging fallback to direct read
         // eslint-disable-next-line
         console.warn('Failed to subscribe to contract, trying direct read approach:', subscriptionError);
-        
+
         // Fallback: Try to read the counter value directly from the public state
         try {
           const value: bigint = await getCounterValueSafely();
@@ -103,7 +103,7 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
           setCounterApi(null); // No API instance for real-time updates
           setHasRealtimeUpdates(false);
           setIsLoading(false);
-          
+
           // Note: No real-time updates available in this mode
           // eslint-disable-next-line
           console.log('Successfully read counter value directly from public state. Real-time updates are not available.');
@@ -427,6 +427,11 @@ export const CounterAddressInput: React.FC<{
   );
 };
 
+// Helper to format contract address for display
+function formatContractAddress(address: string, groupSize = 4): string {
+  return address.replace(new RegExp(`(.{${groupSize}})`, 'g'), '$1 ').trim();
+}
+
 // Main application component that combines address input and counter reader
 export const CounterReaderApplication: React.FC<{
   providers: CounterProviders;
@@ -442,25 +447,45 @@ export const CounterReaderApplication: React.FC<{
     <div>
       <div
         style={{
-          marginBottom: '20px',
+          marginBottom: '24px',
           textAlign: 'center',
-          padding: '10px',
-          backgroundColor: '#e3f2fd',
-          borderRadius: '4px',
         }}
       >
-        <strong>Contract Address:</strong> <code>{contractAddress}</code>
+        <div
+          style={{
+            display: 'inline-block',
+            background: '#f8fafc',
+            border: '1.5px solid #1976d2',
+            borderRadius: '6px',
+            padding: '12px 18px',
+            fontFamily: 'monospace',
+            fontSize: '1.1rem',
+            letterSpacing: '1px',
+            color: '#222',
+            minWidth: '540px', // fits 64 hex chars in monospace
+            maxWidth: '100%',
+            wordBreak: 'break-all',
+            boxShadow: '0 2px 8px 0 rgba(25, 118, 210, 0.07)',
+            marginBottom: '8px',
+          }}
+        >
+          <span style={{ color: '#1976d2', fontWeight: 600 }}>Contract Address:</span>
+          <br />
+          <span style={{ userSelect: 'all', fontWeight: 500 }}>{formatContractAddress(contractAddress)}</span>
+        </div>
+        <br />
         <button
           onClick={() => setContractAddress(undefined)}
           style={{
-            marginLeft: '10px',
-            padding: '4px 8px',
-            fontSize: '12px',
+            marginTop: '10px',
+            padding: '4px 12px',
+            fontSize: '13px',
             backgroundColor: '#666',
             color: 'white',
             border: 'none',
             borderRadius: '3px',
             cursor: 'pointer',
+            marginLeft: '8px',
           }}
         >
           Change Address
