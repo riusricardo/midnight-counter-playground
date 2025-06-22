@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { CounterAPI, type CounterProviders } from '@repo/counter-api/unified-api';
+import { CounterAPI, type CounterState, type CounterProviders } from '@repo/counter-api/unified-api';
 
 interface CounterReaderProviderProps {
   contractAddress: ContractAddress;
@@ -9,19 +9,23 @@ interface CounterReaderProviderProps {
 }
 
 interface CounterReaderContextType {
+  counterState: CounterState | null;
   counterValue: bigint | null;
   isLoading: boolean;
   error: Error | null;
   contractExists: boolean;
   refreshValue: () => Promise<void>;
+  hasRealtimeUpdates: boolean;
 }
 
 const CounterReaderContext = React.createContext<CounterReaderContextType>({
+  counterState: null,
   counterValue: null,
   isLoading: false,
   error: null,
   contractExists: false,
   refreshValue: async () => {},
+  hasRealtimeUpdates: false,
 });
 
 export const useCounterReader = () => {
@@ -33,10 +37,20 @@ export const useCounterReader = () => {
 };
 
 export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ contractAddress, providers, children }) => {
+  const [counterApi, setCounterApi] = useState<CounterAPI | null>(null);
+  const [counterState, setCounterState] = useState<CounterState | null>(null);
   const [counterValue, setCounterValue] = useState<bigint | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [contractExists, setContractExists] = useState<boolean>(false);
+  const [hasRealtimeUpdates, setHasRealtimeUpdates] = useState<boolean>(false);
+
+  // Wrapper function to safely call getCounterValueDirect
+  const getCounterValueSafely = async (): Promise<bigint> => {
+    // @ts-ignore - TypeScript incorrectly infers this as error type, but it returns Promise<bigint>
+    const result: any = await CounterAPI.getCounterValueDirect(providers, contractAddress);
+    return result as bigint;
+  };
 
   const loadCounterValue = async () => {
     try {
@@ -51,10 +65,54 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
         throw new Error(`Contract at address ${contractAddress} does not exist or is not a valid counter contract`);
       }
 
-      // Read the counter value directly from the public state using CounterAPI
-      const value = await CounterAPI.getCounterValueDirect(providers, contractAddress);
-      setCounterValue(value);
-      setIsLoading(false);
+      try {
+        // Try to subscribe to the counter contract for real-time updates
+        const api = await CounterAPI.subscribe(providers, contractAddress);
+        setCounterApi(api);
+        setHasRealtimeUpdates(true);
+
+        // Get initial counter value
+        const value = await api.getCounterValue();
+        setCounterValue(value);
+
+        // Subscribe to state changes for real-time updates
+        const subscription = api.state$.subscribe({
+          next: (state: CounterState) => {
+            setCounterState(state);
+            setCounterValue(state.counterValue);
+          },
+          error: (err: Error) => {
+            setError(err);
+          },
+        });
+
+        setIsLoading(false);
+
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (subscriptionError) {
+        // Use console for debugging - logging fallback to direct read
+        // eslint-disable-next-line
+        console.warn('Failed to subscribe to contract, trying direct read approach:', subscriptionError);
+        
+        // Fallback: Try to read the counter value directly from the public state
+        try {
+          const value: bigint = await getCounterValueSafely();
+          setCounterValue(value);
+          setCounterApi(null); // No API instance for real-time updates
+          setHasRealtimeUpdates(false);
+          setIsLoading(false);
+          
+          // Note: No real-time updates available in this mode
+          // eslint-disable-next-line
+          console.log('Successfully read counter value directly from public state. Real-time updates are not available.');
+        } catch (directError) {
+          throw new Error(
+            `Unable to read from this contract. It may be incompatible or corrupted. Subscription error: ${subscriptionError instanceof Error ? subscriptionError.message : String(subscriptionError)}. Direct read error: ${directError instanceof Error ? directError.message : String(directError)}`,
+          );
+        }
+      }
     } catch (err) {
       setIsLoading(false);
       setError(err instanceof Error ? err : new Error('Unknown error loading counter'));
@@ -67,9 +125,23 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
   }, [contractAddress, providers]);
 
   const refreshValue = async () => {
+    if (!counterApi) {
+      // If we don't have a full API instance, try direct read
+      try {
+        setIsLoading(true);
+        const value: bigint = await getCounterValueSafely();
+        setCounterValue(value);
+        setIsLoading(false);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to refresh counter value'));
+        setIsLoading(false);
+      }
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const value = await CounterAPI.getCounterValueDirect(providers, contractAddress);
+      const value = await counterApi.getCounterValue();
       setCounterValue(value);
       setIsLoading(false);
     } catch (err) {
@@ -81,11 +153,13 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
   return (
     <CounterReaderContext.Provider
       value={{
+        counterState,
         counterValue,
         isLoading,
         error,
         contractExists,
         refreshValue,
+        hasRealtimeUpdates,
       }}
     >
       {children}
@@ -238,7 +312,7 @@ export const CounterReaderDisplay: React.FC = () => {
 };
 
 export const CounterAddressInput: React.FC<{
-  onAddressSubmit: (address: ContractAddress) => void;
+  onAddressSubmit: (_address: ContractAddress) => void;
   initialAddress?: string;
 }> = ({ onAddressSubmit, initialAddress = '' }) => {
   const [addressInput, setAddressInput] = useState<string>(initialAddress);
@@ -353,11 +427,6 @@ export const CounterAddressInput: React.FC<{
   );
 };
 
-// Helper to format contract address for display
-function formatContractAddress(address: string, groupSize = 8): string {
-  return address.replace(new RegExp(`(.{${groupSize}})`, 'g'), '$1 ').trim();
-}
-
 // Main application component that combines address input and counter reader
 export const CounterReaderApplication: React.FC<{
   providers: CounterProviders;
@@ -373,50 +442,31 @@ export const CounterReaderApplication: React.FC<{
     <div>
       <div
         style={{
-          marginBottom: '24px',
+          marginBottom: '20px',
           textAlign: 'center',
+          padding: '10px',
+          backgroundColor: '#e3f2fd',
+          borderRadius: '4px',
         }}
       >
-        <div
-          style={{
-            display: 'inline-block',
-            background: '#f8fafc',
-            border: '1.5px solid #1976d2',
-            borderRadius: '6px',
-            padding: '12px 18px',
-            fontFamily: 'monospace',
-            fontSize: '1.1rem',
-            letterSpacing: '1px',
-            color: '#222',
-            minWidth: '540px', // fits 64 hex chars in monospace
-            maxWidth: '100%',
-            wordBreak: 'break-all',
-            boxShadow: '0 2px 8px 0 rgba(25, 118, 210, 0.07)',
-            marginBottom: '8px',
-          }}
-        >
-          <span style={{ color: '#1976d2', fontWeight: 600 }}>Contract Address:</span>
-          <br />
-          <span style={{ userSelect: 'all', fontWeight: 500 }}>{formatContractAddress(contractAddress)}</span>
-        </div>
-        <br />
+        <strong>Contract Address:</strong> <code>{contractAddress}</code>
         <button
           onClick={() => setContractAddress(undefined)}
           style={{
-            marginTop: '10px',
-            padding: '4px 12px',
-            fontSize: '13px',
+            marginLeft: '10px',
+            padding: '4px 8px',
+            fontSize: '12px',
             backgroundColor: '#666',
             color: 'white',
             border: 'none',
             borderRadius: '3px',
             cursor: 'pointer',
-            marginLeft: '8px',
           }}
         >
           Change Address
         </button>
       </div>
+
       <CounterReaderProvider contractAddress={contractAddress} providers={providers}>
         <CounterReaderDisplay />
       </CounterReaderProvider>
