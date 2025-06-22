@@ -29,8 +29,7 @@ import {
   configureProviders,
   saveState,
 } from '@repo/counter-api/node-api';
-import { setLogger, joinContract, deploy, increment, displayCounterValue } from '@repo/counter-api/unified-api';
-
+import { setLogger, CounterAPI } from '@repo/counter-api/unified-api';
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import { contractConfig } from '@repo/counter-api';
 
@@ -58,7 +57,7 @@ Which would you like to do? `;
 
 const join = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract> => {
   const contractAddress = await rli.question('What is the contract address (in hex)? ');
-  return await joinContract(providers, contractAddress);
+  return await CounterAPI.joinContract(providers, contractAddress);
 };
 
 const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract | null> => {
@@ -67,7 +66,7 @@ const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promis
     const choice = await rli.question(DEPLOY_OR_JOIN_QUESTION);
     switch (choice) {
       case '1':
-        return await deploy(providers, { value: 0 });
+        return await CounterAPI.deployLegacy(providers, { value: 0 });
       case '2':
         return await join(providers, rli);
       case '3':
@@ -89,10 +88,10 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
     const choice = await rli.question(MAIN_LOOP_QUESTION);
     switch (choice) {
       case '1':
-        await increment(counterContract);
+        await CounterAPI.incrementLegacy(counterContract);
         break;
       case '2':
-        await displayCounterValue(providers, counterContract);
+        await CounterAPI.displayCounterValue(providers, counterContract);
         break;
       case '3':
         logger.info('Exiting...');
