@@ -16,6 +16,7 @@
       "outputs": ["src/managed/**", "src/gen/**", "gen/**"]
     },
     "build": {
+      "cache": false,
       "dependsOn": ["^build", "compact", "typecheck"],
       "inputs": ["src/**/*.ts", "src/**/*.mts", "src/**/*.tsx", "!src/**/*.test.ts", "!tests/**/*.ts", "tsconfig.json", "tsconfig.build.json", ".env"],
       "outputs": ["dist/**"]

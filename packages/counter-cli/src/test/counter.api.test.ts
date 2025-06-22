@@ -17,7 +17,7 @@ import { type Resource } from '@midnight-ntwrk/wallet';
 import { type Wallet } from '@midnight-ntwrk/wallet-api';
 import path from 'path';
 import { configureProviders, CounterProviders } from '@repo/counter-api/node-api';
-import { setLogger, deployLegacy, displayCounterValue, incrementLegacy, currentDir } from '@repo/counter-api';
+import { setLogger, CounterAPI, currentDir } from '@repo/counter-api';
 import { createLogger } from '../logger-utils';
 import { TestEnvironment } from './commons';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -53,27 +53,23 @@ describe('API', () => {
   });
 
   it('should deploy the contract and increment the counter [@slow]', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    const counterContract = await deployLegacy(providers, { value: 0 });
+    // Deploy using new unified API
+    const counterContract = await CounterAPI.deploy(providers, { value: 0 }, { returnType: 'contract' });
     expect(counterContract).not.toBeNull();
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const counter = await displayCounterValue(providers, counterContract);
+    // Get initial counter value using new unified API
+    const counter = await CounterAPI.getCounterInfo(providers, counterContract);
     expect(counter.counterValue).toEqual(BigInt(0));
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    const response = await incrementLegacy(counterContract);
-    // Handle both possible response shapes (FinalizedTxData or FinalizedCallTxData.public)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const txHash = (response as any).txHash || (response as any).txId;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const blockHeight = (response as any).blockHeight;
-    expect(txHash).toMatch(/[0-9a-f]{64}/);
-    expect(blockHeight).toBeGreaterThan(BigInt(0));
+    
+    // Increment using new unified API
+    const response = await CounterAPI.increment(counterContract, { returnType: 'transaction' });
+    expect(response.txHash || response.txId).toMatch(/[0-9a-f]{64}/);
+    expect(response.blockHeight).toBeGreaterThan(BigInt(0));
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const counterAfter = await displayCounterValue(providers, counterContract);
+    // Get counter value after increment
+    const counterAfter = await CounterAPI.getCounterInfo(providers, counterContract);
     expect(counterAfter.counterValue).toEqual(BigInt(1));
     expect(counterAfter.contractAddress).toEqual(counter.contractAddress);
   });

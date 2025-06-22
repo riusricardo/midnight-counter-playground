@@ -51,8 +51,8 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
           throw new Error(`Contract at address ${contractAddress} does not exist`);
         }
 
-        // Subscribe to the counter contract
-        const api = await CounterAPI.subscribe(providers, contractAddress);
+        // Connect to the counter contract using unified API
+        const api = await CounterAPI.connect(providers, contractAddress);
 
         setCounterApi(api);
 
@@ -163,18 +163,18 @@ export const DeployCounterButton: React.FC<{
 
       try {
         console.log('📞 CounterComponent: About to call CounterAPI.deploy...');
-        // Use deploy function from api.ts with proper parameters
+        // Use deploy function from unified API with default return type (CounterAPI instance)
         const initialPrivateState: CounterPrivateState = { value: 0 };
         console.log('📦 CounterComponent: Private state:', initialPrivateState);
         
-        const deployedContract = await CounterAPI.deploy(providers, initialPrivateState);
+        const deployedApi = await CounterAPI.deploy(providers, initialPrivateState);
         console.log('✅ CounterComponent: Deploy call completed successfully');
 
-        if (!deployedContract || !deployedContract.deployedContractAddress) {
+        if (!deployedApi || !deployedApi.deployedContractAddress) {
           throw new Error('Deployment succeeded but failed to get contract address');
         }
 
-        const contractAddress = deployedContract.deployedContractAddress;
+        const contractAddress = deployedApi.deployedContractAddress;
         setDeploymentProgress('Deployment successful!');
 
         onDeployed(contractAddress);
