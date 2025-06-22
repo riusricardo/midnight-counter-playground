@@ -115,7 +115,7 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
 };
 
 export const CounterDisplay: React.FC = () => {
-  const { counterValue, incrementCounter, isLoading, error } = useCounter();
+  const { counterValue, isLoading, error } = useCounter();
 
   if (isLoading) {
     return <div>Loading counter...</div>;
@@ -129,9 +129,6 @@ export const CounterDisplay: React.FC = () => {
     <div className="counter-container">
       <h2>Counter Contract</h2>
       <div className="counter-value">Current Value: {counterValue?.toString() || '0'}</div>
-      <button className="increment-button" onClick={() => incrementCounter()} disabled={isLoading}>
-        Increment Counter
-      </button>
     </div>
   );
 };

@@ -14,8 +14,6 @@ interface CounterReaderContextType {
   error: Error | null;
   contractExists: boolean;
   refreshValue: () => Promise<void>;
-  incrementCounter: () => Promise<void>;
-  isIncrementing: boolean;
 }
 
 const CounterReaderContext = React.createContext<CounterReaderContextType>({
@@ -24,8 +22,6 @@ const CounterReaderContext = React.createContext<CounterReaderContextType>({
   error: null,
   contractExists: false,
   refreshValue: async () => {},
-  incrementCounter: async () => {},
-  isIncrementing: false,
 });
 
 export const useCounterReader = () => {
@@ -41,8 +37,6 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [contractExists, setContractExists] = useState<boolean>(false);
-  const [counterApi, setCounterApi] = useState<CounterAPI | null>(null);
-  const [isIncrementing, setIsIncrementing] = useState<boolean>(false);
 
   const loadCounterValue = async () => {
     try {
@@ -57,19 +51,14 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
         throw new Error(`Contract at address ${contractAddress} does not exist or is not a valid counter contract`);
       }
 
-      // Subscribe to the contract to get an API instance for increment functionality
-      const api = await CounterAPI.subscribe(providers, contractAddress);
-      setCounterApi(api);
-
-      // Read the counter value directly from the public state
-      const value = (await CounterAPI.getCounterValueDirect(providers, contractAddress)) as bigint;
+      // Read the counter value directly from the public state using CounterAPI
+      const value = await CounterAPI.getCounterValueDirect(providers, contractAddress);
       setCounterValue(value);
       setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
       setError(err instanceof Error ? err : new Error('Unknown error loading counter'));
       setContractExists(false);
-      setCounterApi(null);
     }
   };
 
@@ -89,25 +78,6 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
     }
   };
 
-  const incrementCounter = async () => {
-    if (!counterApi) {
-      setError(new Error('Counter API not initialized. Cannot increment.'));
-      return;
-    }
-
-    try {
-      setIsIncrementing(true);
-      setError(null);
-      await counterApi.increment();
-      // Refresh the value after incrementing
-      await refreshValue();
-      setIsIncrementing(false);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to increment counter'));
-      setIsIncrementing(false);
-    }
-  };
-
   return (
     <CounterReaderContext.Provider
       value={{
@@ -116,8 +86,6 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
         error,
         contractExists,
         refreshValue,
-        incrementCounter,
-        isIncrementing,
       }}
     >
       {children}
@@ -126,7 +94,7 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
 };
 
 export const CounterReaderDisplay: React.FC = () => {
-  const { counterValue, isLoading, error, contractExists, refreshValue, incrementCounter, isIncrementing } = useCounterReader();
+  const { counterValue, isLoading, error, contractExists, refreshValue } = useCounterReader();
 
   if (isLoading) {
     return (
@@ -250,42 +218,20 @@ export const CounterReaderDisplay: React.FC = () => {
         onClick={() => {
           void refreshValue();
         }}
-        disabled={isLoading || isIncrementing}
+        disabled={isLoading}
         style={{
           width: '100%',
           padding: '12px',
           fontSize: '16px',
-          backgroundColor: isLoading || isIncrementing ? '#cccccc' : '#2e7d32',
+          backgroundColor: isLoading ? '#cccccc' : '#2e7d32',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
-          cursor: isLoading || isIncrementing ? 'not-allowed' : 'pointer',
+          cursor: isLoading ? 'not-allowed' : 'pointer',
           transition: 'background-color 0.2s',
-          marginBottom: '8px',
         }}
       >
         {isLoading ? 'Refreshing...' : 'Refresh Value'}
-      </button>
-
-      <button
-        className="increment-button"
-        onClick={() => {
-          void incrementCounter();
-        }}
-        disabled={isLoading || isIncrementing}
-        style={{
-          width: '100%',
-          padding: '12px',
-          fontSize: '16px',
-          backgroundColor: isLoading || isIncrementing ? '#cccccc' : '#ff9800',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: isLoading || isIncrementing ? 'not-allowed' : 'pointer',
-          transition: 'background-color 0.2s',
-        }}
-      >
-        {isIncrementing ? 'Incrementing...' : 'Increment Counter'}
       </button>
     </div>
   );
