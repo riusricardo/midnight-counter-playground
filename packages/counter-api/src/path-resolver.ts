@@ -28,9 +28,6 @@
  * - Used by config.ts to establish base paths for the application
  */
 
-import path from 'node:path';
-import fs from 'node:fs';
-
 // Universal Directory Path Detection
 // This function works in both CommonJS and ESM environments
 export function getDirPath(): string {

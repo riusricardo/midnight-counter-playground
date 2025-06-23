@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Export unified API for React compatibility
+// Browser-specific exports - excludes Node.js-only functionality
 export * from './unified-api.js';
 export * from './config.js';
 export * from './browser-config.js';
 export * from './common-types.js';
-export * from './node-api.js';
+// Note: node-api.js is excluded for browser compatibility

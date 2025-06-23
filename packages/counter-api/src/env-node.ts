@@ -50,8 +50,17 @@ export const fileExists = async (path: string): Promise<boolean> => {
 
 // Direct Re-exports from Node.js fs module
 // These provide access to synchronous operations, streams, and constants
-export const { existsSync, createReadStream, createWriteStream, constants } = fs;
+export const { existsSync, readFileSync, createReadStream, createWriteStream, constants } = fs;
 export const { mkdir } = fsAsync;
+
+// Node.js path utilities - direct re-export from path module
+import * as nodePath from 'node:path';
+export const pathUtils = {
+  join: nodePath.join,
+  resolve: nodePath.resolve,
+  dirname: nodePath.dirname,
+  basename: nodePath.basename
+};
 
 // TypeScript Interface Definitions
 // These extend Node.js stream types to match the browser interface definitions

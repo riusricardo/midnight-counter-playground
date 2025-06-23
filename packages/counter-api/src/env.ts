@@ -70,12 +70,29 @@ export const fileExists = async (_path: string): Promise<boolean> => {
 // Synchronous file existence check (Node.js only)
 // Browser builds will throw an error if this is called
 export const existsSync = (_path: string): boolean => {
-  try {
-    const { fileExists } = require('./env-node.js');
-    return fileExists(_path);
-  } catch (e) {
-    throw new Error('File system access is not available in this context');
+  if (isNodeEnvironment) {
+    try {
+      const fs = require('node:fs');
+      return fs.existsSync(_path);
+    } catch (e) {
+      return false;
+    }
   }
+  return false; // Browser environment - no files exist
+};
+
+// Synchronous file reading (Node.js only)
+// Browser builds will throw an error if this is called
+export const readFileSync = (_path: string, encoding: BufferEncoding = 'utf8'): string => {
+  if (isNodeEnvironment) {
+    try {
+      const fs = require('node:fs');
+      return fs.readFileSync(_path, encoding);
+    } catch (e) {
+      throw new Error(`Failed to read file: ${_path}`);
+    }
+  }
+  throw new Error('Synchronous file system operations are not supported in the browser');
 };
 
 export const mkdir = async (_path: string, options?: { recursive?: boolean }): Promise<void> => {
@@ -109,7 +126,7 @@ export const createReadStream = (_path: string): ReadStream => {
   if (isNodeEnvironment) {
     try {
       const fs = require('node:fs');
-      return fs.createReadStream(_path, 'utf-8');
+      return fs.createReadStream(_path, { encoding: 'utf8' });
     } catch {
       // Return mock stream that signals failure
       const stream: ReadStream = {
@@ -181,3 +198,50 @@ export const constants = {
   W_OK: 2, // File is writable
   X_OK: 1  // File is executable
 };
+
+// Cross-platform path utilities
+// These provide path operations that work in both Node.js and browser environments
+export const pathUtils = (() => {
+  if (isNodeEnvironment) {
+    try {
+      const path = require('node:path');
+      return {
+        join: path.join,
+        resolve: path.resolve,
+        dirname: path.dirname,
+        basename: path.basename
+      };
+    } catch (e) {
+      // Fallback to simple implementations
+    }
+  }
+  
+  // Browser-compatible path utilities
+  return {
+    join: (...segments: string[]): string => {
+      return segments.filter(Boolean).join('/').replace(/\/+/g, '/');
+    },
+    
+    resolve: (...segments: string[]): string => {
+      let result = '';
+      for (const segment of segments) {
+        if (segment.startsWith('/')) {
+          result = segment;
+        } else {
+          result = result ? `${result}/${segment}` : segment;
+        }
+      }
+      return result.replace(/\/+/g, '/');
+    },
+    
+    dirname: (filepath: string): string => {
+      const lastSlash = filepath.lastIndexOf('/');
+      return lastSlash === -1 ? '.' : filepath.substring(0, lastSlash) || '/';
+    },
+    
+    basename: (filepath: string): string => {
+      const lastSlash = filepath.lastIndexOf('/');
+      return lastSlash === -1 ? filepath : filepath.substring(lastSlash + 1);
+    }
+  };
+})();

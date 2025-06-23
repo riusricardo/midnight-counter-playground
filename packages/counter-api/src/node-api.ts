@@ -11,7 +11,7 @@ import {
 import { Transaction as ZswapTransaction } from '@midnight-ntwrk/zswap';
 import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { toHex } from '@midnight-ntwrk/midnight-js-utils';
-import { webcrypto } from 'crypto';
+import { webcrypto } from 'node:crypto';
 import * as Rx from 'rxjs';
 import * as env from './env.js';
 import { WalletBuilder, type Resource } from '@midnight-ntwrk/wallet';

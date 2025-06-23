@@ -49,6 +49,40 @@ export const existsSync = (): boolean => {
   return false;
 };
 
+export const readFileSync = (): string => {
+  throw new Error('Synchronous file system operations are not supported in the browser');
+};
+
+// Browser-compatible path utilities
+// These provide basic path operations without Node.js dependencies
+export const pathUtils = {
+  join: (...segments: string[]): string => {
+    return segments.filter(Boolean).join('/').replace(/\/+/g, '/');
+  },
+  
+  resolve: (...segments: string[]): string => {
+    let result = '';
+    for (const segment of segments) {
+      if (segment.startsWith('/')) {
+        result = segment;
+      } else {
+        result = result ? `${result}/${segment}` : segment;
+      }
+    }
+    return result.replace(/\/+/g, '/');
+  },
+  
+  dirname: (filepath: string): string => {
+    const lastSlash = filepath.lastIndexOf('/');
+    return lastSlash === -1 ? '.' : filepath.substring(0, lastSlash) || '/';
+  },
+  
+  basename: (filepath: string): string => {
+    const lastSlash = filepath.lastIndexOf('/');
+    return lastSlash === -1 ? filepath : filepath.substring(lastSlash + 1);
+  }
+};
+
 export const mkdir = async (): Promise<void> => {
   throw new Error('File system operations are not supported in the browser');
 };

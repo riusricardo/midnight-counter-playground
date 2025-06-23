@@ -19,7 +19,6 @@ export default defineConfig({
       plugins: [
         inject({
           util: ['util', '*'],
-          stream: ['stream-browserify', '*'],
           Buffer: ['buffer', 'Buffer'],
           process: 'process',
         }),
@@ -42,11 +41,7 @@ export default defineConfig({
       },
       // Whether to polyfill Node.js builtins
       protocolImports: true,
-      include: ['util', 'buffer', 'stream', 'events', 'path', 'querystring', 'url', 'fs', 'crypto', 'os'],
-      // Fix stream-browserify polyfill issues
-      overrides: {
-        stream: 'stream-browserify',
-      },
+      include: ['util', 'buffer', 'events', 'path', 'querystring', 'url', 'fs', 'crypto', 'os'],
     }),
   ],
   optimizeDeps: {
@@ -65,16 +60,9 @@ export default defineConfig({
       // Additional specific aliases
       'node:util': stdLibBrowser.util,
       'node:buffer': stdLibBrowser.buffer,
-      'node:stream': stdLibBrowser.stream,
       'node:fs': stdLibBrowser.fs,
       'node:crypto': stdLibBrowser.crypto,
       'node:path': stdLibBrowser.path,
-
-      // Fix stream polyfill issues
-      stream: 'stream-browserify',
-      'stream/web': 'web-streams-polyfill/dist/ponyfill.es2018.js',
-      'stream-browserify/web': 'web-streams-polyfill/dist/ponyfill.es2018.js',
-      'node:stream/web': 'web-streams-polyfill/dist/ponyfill.es2018.js',
 
       // Environment Abstraction Layer Aliases
       //

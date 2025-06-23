@@ -29,6 +29,7 @@
     "@midnight-ntwrk/counter-cli": "0.1.0",
     "@mui/icons-material": "^7.1.1",
     "@mui/material": "^7.1.1",
+    "@repo/counter-api": "*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

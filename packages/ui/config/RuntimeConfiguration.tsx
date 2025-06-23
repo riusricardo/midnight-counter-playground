@@ -1,12 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { loadBrowserConfiguration, type RuntimeConfiguration as BrowserRuntimeConfiguration } from '@repo/counter-api';
 
-export interface RuntimeConfiguration {
-  LOGGING_LEVEL: string;
-  COUNTER_ADDRESS: string;
-  NETWORK_ID: string;
-  PUBLIC_URL: string;
-  INDEXER_URI: string;
-  INDEXER_WS_URI: string;
+export interface RuntimeConfiguration extends BrowserRuntimeConfiguration {
+  // UI-specific configuration can be added here if needed
 }
 
 const RuntimeConfigurationContext = createContext<RuntimeConfiguration | null>(null);
@@ -24,32 +20,25 @@ interface RuntimeConfigurationProviderProps {
 }
 
 /**
- * Loads runtime configuration from static file (in /public folder).
+ * Loads runtime configuration using the unified configuration system.
+ * This replaces the static config.json approach with the same configuration
+ * system used by the CLI and API components.
  */
-export const loadRuntimeConfiguration = async (): Promise<RuntimeConfiguration> => {
-  const response = await fetch('/config.json');
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const value: Record<string, string> = await response.json();
-
-  return {
-    COUNTER_ADDRESS: value.COUNTER_ADDRESS,
-    LOGGING_LEVEL: value.LOGGING_LEVEL,
-    NETWORK_ID: value.NETWORK_ID,
-    PUBLIC_URL: value.PUBLIC_URL,
-    INDEXER_URI: value.INDEXER_URI,
-    INDEXER_WS_URI: value.INDEXER_WS_URI,
-  };
+export const loadRuntimeConfiguration = (): RuntimeConfiguration => {
+  // Use default testnet-remote configuration for now
+  // TODO: Add environment detection in a separate component with proper DOM types
+  return loadBrowserConfiguration('testnet-remote');
 };
 
 export const RuntimeConfigurationProvider: React.FC<RuntimeConfigurationProviderProps> = ({ children }) => {
   const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfiguration | null>(null);
 
   useEffect(() => {
-    const loadConfig = async (): Promise<void> => {
-      const loadedConfig = await loadRuntimeConfiguration();
+    const loadConfig = (): void => {
+      const loadedConfig = loadRuntimeConfiguration();
       setRuntimeConfig(loadedConfig);
     };
-    void loadConfig();
+    loadConfig();
   }, []);
 
   return (
