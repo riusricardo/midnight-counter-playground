@@ -46,17 +46,28 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
   const [contractExists, setContractExists] = useState<boolean>(false);
   const [hasRealtimeUpdates, setHasRealtimeUpdates] = useState<boolean>(false);
 
-  // Wrapper function to safely call getCounterValue
+  // Wrapper function to safely call getCounterState
   const getCounterValueSafely = async (): Promise<bigint> => {
-    // @ts-ignore - TypeScript incorrectly infers this as error type, but it returns Promise<bigint>
-    const result: any = await CounterAPI.getCounterInfo(providers);
-    return result as bigint;
+    if (!contractAddress) {
+      throw new Error('Contract address is required');
+    }
+    const counterValue = await CounterAPI.getCounterState(providers, contractAddress);
+    if (counterValue === null) {
+      throw new Error('Counter value is null - contract may not exist or be incompatible');
+    }
+    return counterValue;
   };
 
   const loadCounterValue = async () => {
     // Don't proceed if providers are not ready
     if (!providers) {
       setError(new Error('Providers not initialized'));
+      return;
+    }
+
+    // Don't proceed if contract address is not set
+    if (!contractAddress) {
+      setError(new Error('Contract address not provided'));
       return;
     }
 
@@ -115,7 +126,6 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
           setIsLoading(false);
 
           // Note: No real-time updates available in this mode
-          // eslint-disable-next-line
           console.log('Successfully read counter value directly from public state. Real-time updates are not available.');
         } catch (directError) {
           throw new Error(
@@ -139,6 +149,11 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
   const refreshValue = async () => {
     if (!providers) {
       setError(new Error('Providers not initialized'));
+      return;
+    }
+
+    if (!contractAddress) {
+      setError(new Error('Contract address not provided'));
       return;
     }
 
@@ -315,7 +330,7 @@ export const CounterReaderDisplay: React.FC = () => {
 };
 
 export const CounterAddressInput: React.FC<{
-  onAddressSubmit: (_address: ContractAddress) => void;
+  onAddressSubmit: (address: ContractAddress) => void;
   initialAddress?: string;
 }> = ({ onAddressSubmit, initialAddress = '' }) => {
   const [addressInput, setAddressInput] = useState<string>(initialAddress);
