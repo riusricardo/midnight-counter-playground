@@ -37,15 +37,22 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
   const [counterApi, setCounterApi] = useState<CounterAPI | null>(null);
   const [counterState, setCounterState] = useState<CounterState | null>(null);
   const [counterValue, setCounterValue] = useState<bigint | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
     
     const initCounter = async () => {
+      // Don't proceed if providers are not ready
+      if (!providers) {
+        setError(new Error('Providers not initialized'));
+        return;
+      }
+
       try {
         setIsLoading(true);
+        setError(null);
         // First check if the contract exists
         const exists = await CounterAPI.contractExists(providers, contractAddress);
 
@@ -85,7 +92,10 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
       }
     };
 
-    void initCounter();
+    // Only initialize if providers are available
+    if (providers && contractAddress) {
+      void initCounter();
+    }
 
     // Cleanup function
     return () => {
@@ -274,6 +284,15 @@ export const CounterApplication: React.FC<{
   providers: CounterProviders;
 }> = ({ contractAddress, providers }) => {
   const [deployedAddress, setDeployedAddress] = useState<ContractAddress | undefined>(contractAddress);
+
+  // Show loading state if providers are not ready
+  if (!providers) {
+    return (
+      <div style={{ textAlign: 'center', padding: '20px' }}>
+        <div>Loading providers...</div>
+      </div>
+    );
+  }
 
   if (!deployedAddress) {
     return <DeployCounterButton providers={providers} onDeployed={(address) => setDeployedAddress(address)} />;

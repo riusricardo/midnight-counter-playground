@@ -24,7 +24,7 @@ import { connectToWallet } from './connectToWallet';
 import { noopProofClient, proofClient } from './proofClient';
 import { WrappedPublicDataProvider } from './publicDataProvider';
 import { WrappedPrivateStateProvider } from './privateStateProvider';
-import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
+import { CachedFetchZkConfigProvider } from './zkConfigProvider';
 
 // Replace isChromeBrowser and window/fetch usages with safe checks for build/SSR
 function isChromeBrowser(): boolean {
@@ -114,7 +114,6 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
   const config = useRuntimeConfiguration();
   const [isRotate, setRotate] = React.useState(false);
   const localState = useLocalState() as ReturnType<typeof useLocalState>;
-  const [snackBarText, setSnackBarText] = useState<string | undefined>(undefined);
   const [walletAPI, setWalletAPI] = useState<WalletAPI | undefined>(undefined);
   const [floatingOpen] = React.useState(true);
 
@@ -133,32 +132,10 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
     // no-op
   };
 
-  // Provide a no-op fallback for zkConfigProvider
-  const emptyZkConfigProvider: ZKConfigProvider<CounterCircuits> = {
-    getZKIR: async () => {
-      throw new Error('Not implemented');
-    },
-    getProverKey: async () => {
-      throw new Error('Not implemented');
-    },
-    getVerifierKey: async () => {
-      throw new Error('Not implemented');
-    },
-    getVerifierKeys: async () => {
-      throw new Error('Not implemented');
-    },
-    get: async () => {
-      throw new Error('Not implemented');
-    },
-  };
   const zkConfigProvider = useMemo(
-    () =>
-      typeof window !== 'undefined' && typeof fetch !== 'undefined'
-        ? new FetchZkConfigProvider<CounterCircuits>(window.location.origin, fetch.bind(window))
-        : emptyZkConfigProvider,
+    () => new CachedFetchZkConfigProvider<CounterCircuits>(window.location.origin, fetch.bind(window), providerCallback),
     [],
   );
-
   const publicDataProvider = useMemo(
     () =>
       new WrappedPublicDataProvider(
@@ -171,10 +148,8 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
 
   function shake(): void {
     setRotate(true);
-    setSnackBarText('Please connect to your Midnight Lace wallet');
     setTimeout(() => {
       setRotate(false);
-      setSnackBarText(undefined);
     }, 3000);
   }
 
@@ -346,11 +321,10 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
         floatingOpen,
         address,
         walletError,
-        snackBarText,
       ),
       shake,
     }));
-  }, [isConnecting, walletError, address, isRotate, proofServerIsOnline, snackBarText]);
+  }, [isConnecting, walletError, address, isRotate, proofServerIsOnline]);
 
   useEffect(() => {
     if (!walletState.isConnected && !isConnecting && !walletError && localState.isLaceAutoConnect()) {

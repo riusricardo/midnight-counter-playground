@@ -53,23 +53,23 @@ describe('API', () => {
   });
 
   it('should deploy the contract and increment the counter [@slow]', async () => {
-    // Deploy using new unified API
-    const counterContract = await CounterAPI.deploy(providers, { value: 0 }, { returnType: 'contract' });
-    expect(counterContract).not.toBeNull();
+    // Deploy using new unified API - now returns CounterAPI instance
+    const counterApi = await CounterAPI.deploy(providers, { value: 0 });
+    expect(counterApi).not.toBeNull();
 
     // Get initial counter value using new unified API
-    const counter = await CounterAPI.getCounterInfo(providers, counterContract);
+    const counter = await CounterAPI.getCounterInfo(counterApi);
     expect(counter.counterValue).toEqual(BigInt(0));
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
     
-    // Increment using new unified API
-    const response = await CounterAPI.increment(counterContract, { returnType: 'transaction' });
+    // Increment using new unified API - use incrementWithTxInfo for transaction response
+    const response = await CounterAPI.incrementWithTxInfo(counterApi);
     expect(response.txHash || response.txId).toMatch(/[0-9a-f]{64}/);
     expect(response.blockHeight).toBeGreaterThan(BigInt(0));
 
     // Get counter value after increment
-    const counterAfter = await CounterAPI.getCounterInfo(providers, counterContract);
+    const counterAfter = await CounterAPI.getCounterInfo(counterApi);
     expect(counterAfter.counterValue).toEqual(BigInt(1));
     expect(counterAfter.contractAddress).toEqual(counter.contractAddress);
   });

@@ -21,7 +21,6 @@ import { type Logger } from 'pino';
 import { type StartedDockerComposeEnvironment, type DockerComposeEnvironment } from 'testcontainers';
 import {
   type CounterProviders,
-  type DeployedCounterContract,
   type Config,
   StandaloneConfig,
   buildWalletAndWaitForFunds,
@@ -54,18 +53,18 @@ You can do one of the following:
   3. Exit
 Which would you like to do? `;
 
-const join = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract> => {
+const join = async (providers: CounterProviders, rli: Interface): Promise<CounterAPI> => {
   const contractAddress = await rli.question('What is the contract address (in hex)? ');
-  return await CounterAPI.connect(providers, contractAddress, { returnType: 'contract' });
+  return await CounterAPI.connect(providers, contractAddress);
 };
 
-const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract | null> => {
+const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promise<CounterAPI | null> => {
   while (true) {
     // while loop for CLI menu
     const choice = await rli.question(DEPLOY_OR_JOIN_QUESTION);
     switch (choice) {
       case '1':
-        return await CounterAPI.deploy(providers, { value: 0 }, { returnType: 'contract' });
+        return await CounterAPI.deploy(providers, { value: 0 });
       case '2':
         return await join(providers, rli);
       case '3':
@@ -78,8 +77,8 @@ const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promis
 };
 
 const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<void> => {
-  const counterContract = await deployOrJoin(providers, rli);
-  if (counterContract === null) {
+  const counterApi = await deployOrJoin(providers, rli);
+  if (counterApi === null) {
     return;
   }
   while (true) {
@@ -87,10 +86,10 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
     const choice = await rli.question(MAIN_LOOP_QUESTION);
     switch (choice) {
       case '1':
-        await CounterAPI.increment(counterContract, { returnType: 'transaction' });
+        await CounterAPI.incrementWithTxInfo(counterApi);
         break;
       case '2':
-        await CounterAPI.getCounterInfo(providers, counterContract);
+        await CounterAPI.getCounterInfo(counterApi);
         break;
       case '3':
         logger.info('Exiting...');

@@ -17,13 +17,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { Counter, type CounterPrivateState, witnesses } from '@midnight-ntwrk/counter-contract';
+import { Counter, type CounterPrivateState, createCounterPrivateState, witnesses } from '@midnight-ntwrk/counter-contract';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
   type FinalizedTxData,
 } from '@midnight-ntwrk/midnight-js-types';
 
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
+import type { PrivateStateProvider } from '@midnight-ntwrk/midnight-js-types';
 import { map, type Observable, retry } from 'rxjs';
 import {
   type CounterContract,
@@ -46,17 +47,6 @@ export interface CounterState {
   readonly counterValue: bigint;
 }
 
-// API Operation Options
-export interface DeployOptions {
-  /** Return type: 'api' for UI (CounterAPI instance), 'contract' for CLI (DeployedCounterContract) */
-  returnType?: 'api' | 'contract';
-}
-
-export interface IncrementOptions {
-  /** Return type: 'void' for UI, 'transaction' for CLI (transaction data) */
-  returnType?: 'void' | 'transaction';
-}
-
 // Transaction response type for CLI operations
 export interface TransactionResponse {
   readonly txId?: string;
@@ -64,7 +54,7 @@ export interface TransactionResponse {
   readonly blockHeight?: bigint | number;
 }
 
-// Main CounterAPI class - Professional unified interface
+// Main CounterAPI class
 export class CounterAPI implements DeployedCounterAPI {
   private constructor(
     public readonly deployedContract: DeployedCounterContract,
@@ -89,17 +79,17 @@ export class CounterAPI implements DeployedCounterAPI {
 
   async increment(): Promise<void> {
     console.log('Incrementing counter...');
-    const finalizedTxData = await this.deployedContract.callTx.increment();
-    console.log(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
+    const finalizedTxData = await CounterAPI.incrementWithTxInfo(this);
+    console.log(`Transaction ${finalizedTxData.txId} added in block ${finalizedTxData.blockHeight}`);
   }
 
   async getCounterValue(): Promise<bigint> {
     console.log('Getting counter value...');
-    const state = await this.providers.publicDataProvider.queryContractState(this.deployedContractAddress);
-    if (state === null) {
+    const { counterValue } = await CounterAPI.getCounterInfo(this);
+    if (counterValue === null) {
       return BigInt(0);
     }
-    return Counter.ledger(state.data).round;
+    return counterValue;
   }
 
   // ========================================
@@ -110,24 +100,12 @@ export class CounterAPI implements DeployedCounterAPI {
    * Deploy a new counter contract
    * @param providers - The providers configuration
    * @param privateState - Initial private state for the contract
-   * @param options - Deployment options to control return type
-   * @returns CounterAPI instance (UI) or DeployedCounterContract (CLI) based on options
+   * @returns CounterAPI instance
    */
   static async deploy(
     providers: CounterProviders,
-    privateState: CounterPrivateState,
-    options: DeployOptions & { returnType: 'contract' }
-  ): Promise<DeployedCounterContract>;
-  static async deploy(
-    providers: CounterProviders,
-    privateState: CounterPrivateState,
-    options?: DeployOptions & { returnType?: 'api' }
-  ): Promise<CounterAPI>;
-  static async deploy(
-    providers: CounterProviders,
-    privateState: CounterPrivateState,
-    options: DeployOptions = {}
-  ): Promise<CounterAPI | DeployedCounterContract> {
+    privateState: CounterPrivateState
+  ): Promise<CounterAPI> {
     console.log('Deploying counter contract...');
     
     try {
@@ -138,19 +116,15 @@ export class CounterAPI implements DeployedCounterAPI {
       const deployedContract = await deployContract(providers as any, {
         contract: counterContractInstance,
         privateStateId: 'counterPrivateState',
-        initialPrivateState: privateState,
+        initialPrivateState: await CounterAPI.getPrivateState('counterPrivateState', providers.privateStateProvider),
       });
       
       console.log(`Deployed contract at address: ${deployedContract.deployTxData.public.contractAddress}`);
       
       const typedContract = deployedContract as unknown as DeployedCounterContract;
       
-      // Return based on requested type
-      if (options.returnType === 'contract') {
-        return typedContract;
-      } else {
-        return new CounterAPI(typedContract, providers);
-      }
+      // Always return CounterAPI instance
+      return new CounterAPI(typedContract, providers);
       
     } catch (error) {
       console.error('Contract deployment failed:', error);
@@ -171,42 +145,27 @@ export class CounterAPI implements DeployedCounterAPI {
    * Connect to an existing counter contract
    * @param providers - The providers configuration
    * @param contractAddress - Address of the existing contract
-   * @param options - Connection options to control return type
-   * @returns CounterAPI instance (UI) or DeployedCounterContract (CLI) based on options
+   * @returns CounterAPI instance
    */
   static async connect(
     providers: CounterProviders,
-    contractAddress: ContractAddress | string,
-    options: DeployOptions & { returnType: 'contract' }
-  ): Promise<DeployedCounterContract>;
-  static async connect(
-    providers: CounterProviders,
-    contractAddress: ContractAddress | string,
-    options?: DeployOptions & { returnType?: 'api' }
-  ): Promise<CounterAPI>;
-  static async connect(
-    providers: CounterProviders,
-    contractAddress: ContractAddress | string,
-    options: DeployOptions = {}
-  ): Promise<CounterAPI | DeployedCounterContract> {
+    contractAddress: ContractAddress | string
+  ): Promise<CounterAPI> {
     console.log(`Connecting to counter contract at ${contractAddress}...`);
+    const state = await this.getOrCreateInitialPrivateState(providers.privateStateProvider);
     try {
       const deployedContract = await findDeployedContract(providers as any, {
         contractAddress,
         contract: counterContractInstance,
         privateStateId: 'counterPrivateState',
-        initialPrivateState: { value: 0 },
+        initialPrivateState: state,
       });
       
       console.log('Successfully connected to contract');
       const typedContract = deployedContract as unknown as DeployedCounterContract;
       
-      // Return based on requested type
-      if (options.returnType === 'contract') {
-        return typedContract;
-      } else {
-        return new CounterAPI(typedContract, providers);
-      }
+      // Always return CounterAPI instance
+      return new CounterAPI(typedContract, providers);
     } catch (error) {
       console.error('Error connecting to contract:', error);
       
@@ -218,25 +177,13 @@ export class CounterAPI implements DeployedCounterAPI {
   }
 
   /**
-   * Increment the counter
-   * @param contract - The deployed contract instance
-   * @param options - Increment options to control return type
-   * @returns void (UI) or transaction data (CLI) based on options
+   * Increment the counter and return transaction information (for CLI use)
+   * @param counterApi - The CounterAPI instance
+   * @returns Transaction response with details
    */
-  static async increment(
-    contract: DeployedCounterContract,
-    options: IncrementOptions & { returnType: 'transaction' }
-  ): Promise<TransactionResponse>;
-  static async increment(
-    contract: DeployedCounterContract,
-    options?: IncrementOptions & { returnType?: 'void' }
-  ): Promise<void>;
-  static async increment(
-    contract: DeployedCounterContract,
-    options: IncrementOptions = {}
-  ): Promise<void | TransactionResponse> {
+  static async incrementWithTxInfo(counterApi: CounterAPI): Promise<TransactionResponse> {
     console.log('Incrementing...');
-    const finalizedTxData = await contract.callTx.increment();
+    const finalizedTxData = await counterApi.deployedContract.callTx.increment();
     
     // Extract transaction information defensively
     let txInfo: TransactionResponse = {};
@@ -264,31 +211,30 @@ export class CounterAPI implements DeployedCounterAPI {
       console.log('Transaction finalized:', finalizedTxData);
     }
 
-    // Return based on requested type
-    if (options.returnType === 'transaction') {
-      return txInfo;
-    }
-    // Default: return void for UI
+    return txInfo;
   }
 
   /**
    * Get current counter value and contract information
-   * @param providers - The providers configuration
-   * @param contract - The deployed contract instance
+   * @param counterApi - The CounterAPI instance
    * @returns Object with counter value and contract address
    */
   static async getCounterInfo(
-    providers: CounterProviders,
-    contract: DeployedCounterContract,
-  ): Promise<{ counterValue: bigint | null; contractAddress: string }> {
-    const contractAddress = contract.deployTxData.public.contractAddress;
-    const counterValue = await CounterAPI.getCounterState(providers, contractAddress);
-    if (counterValue === null) {
-      console.log(`There is no counter contract deployed at ${contractAddress}.`);
-    } else {
-      console.log(`Current counter value: ${Number(counterValue)}`);
+    counterApi: CounterAPI
+  ): Promise<{ counterValue: bigint | null; contractAddress: ContractAddress }> {
+    const contractAddress = counterApi.deployedContractAddress;
+    try {
+      const counterValue = await CounterAPI.getCounterState(counterApi.providers, contractAddress);
+      if (counterValue === null) {
+        console.log(`There is no counter contract deployed at ${contractAddress}.`);
+      } else {
+        console.log(`Current counter value: ${Number(counterValue)}`);
+      }
+      return { contractAddress, counterValue };
+    } catch (error) {
+      console.error('Error reading counter value directly:', error);
+      throw new Error(`Unable to read counter value from contract at ${contractAddress}. The contract may not be a valid counter contract or may be incompatible.`);
     }
-    return { contractAddress, counterValue };
   }
 
   /**
@@ -323,22 +269,47 @@ export class CounterAPI implements DeployedCounterAPI {
     }
   }
 
-  static async getCounterValueDirect(providers: CounterProviders, contractAddress: ContractAddress): Promise<bigint> {
-    try {
-      const state = await providers.publicDataProvider.queryContractState(contractAddress);
-      if (state === null) {
-        throw new Error('Contract state not found');
-      }
-      return Counter.ledger(state.data).round;
-    } catch (error) {
-      console.error('Error reading counter value directly:', error);
-      throw new Error(`Unable to read counter value from contract at ${contractAddress}. The contract may not be a valid counter contract or may be incompatible.`);
+    static async getOrCreateInitialPrivateState(
+    privateStateProvider: PrivateStateProvider<'counterPrivateState', CounterPrivateState>,
+  ): Promise<CounterPrivateState> {
+    let state = await privateStateProvider.get('counterPrivateState');
+    if (state === null) {
+      state = createCounterPrivateState();
+      await privateStateProvider.set('counterPrivateState', state);
     }
+    return state;
+  }
+
+    private static async getPrivateState(
+    privateStateKey: 'counterPrivateState',
+    providers: PrivateStateProvider<'counterPrivateState', CounterPrivateState>,
+  ): Promise<CounterPrivateState> {
+    const existingPrivateState = await providers.get(privateStateKey);
+    const initialState = await this.getOrCreateInitialPrivateState(providers);
+    return existingPrivateState ?? initialState;
   }
 
   // ========================================
-  // UTILITY METHODS
+  // CLI UTILITY METHODS
   // ========================================
+
+  /**
+   * Get the underlying deployed contract from a CounterAPI instance (for CLI compatibility)
+   * @param counterApi - The CounterAPI instance
+   * @returns The deployed contract instance
+   */
+  static getDeployedContract(counterApi: CounterAPI): DeployedCounterContract {
+    return counterApi.deployedContract;
+  }
+
+  /**
+   * Get the contract address from a CounterAPI instance
+   * @param counterApi - The CounterAPI instance
+   * @returns The contract address as string
+   */
+  static getContractAddress(counterApi: CounterAPI): string {
+    return counterApi.deployedContractAddress;
+  }
 
   // ========================================
   // UTILITY METHODS

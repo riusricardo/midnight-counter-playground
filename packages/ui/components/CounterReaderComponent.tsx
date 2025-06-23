@@ -1,3 +1,4 @@
+/* global console */
 import React, { useState, useEffect } from 'react';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
 import { CounterAPI, type CounterState, type CounterProviders } from '@repo/counter-api';
@@ -40,7 +41,7 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
   const [counterApi, setCounterApi] = useState<CounterAPI | null>(null);
   const [counterState, setCounterState] = useState<CounterState | null>(null);
   const [counterValue, setCounterValue] = useState<bigint | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [contractExists, setContractExists] = useState<boolean>(false);
   const [hasRealtimeUpdates, setHasRealtimeUpdates] = useState<boolean>(false);
@@ -53,6 +54,12 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
   };
 
   const loadCounterValue = async () => {
+    // Don't proceed if providers are not ready
+    if (!providers) {
+      setError(new Error('Providers not initialized'));
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -121,27 +128,20 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
   };
 
   useEffect(() => {
-    void loadCounterValue();
+    if (providers && contractAddress) {
+      void loadCounterValue();
+    }
   }, [contractAddress, providers]);
 
   const refreshValue = async () => {
-    if (!counterApi) {
-      // If we don't have a full API instance, try direct read
-      try {
-        setIsLoading(true);
-        const value: bigint = await getCounterValueSafely();
-        setCounterValue(value);
-        setIsLoading(false);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to refresh counter value'));
-        setIsLoading(false);
-      }
+    if (!providers) {
+      setError(new Error('Providers not initialized'));
       return;
     }
 
     try {
       setIsLoading(true);
-      const value = await counterApi.getCounterValue();
+      const value = await getCounterValueSafely();
       setCounterValue(value);
       setIsLoading(false);
     } catch (err) {
@@ -438,6 +438,15 @@ export const CounterReaderApplication: React.FC<{
   initialAddress?: ContractAddress;
 }> = ({ providers, initialAddress }) => {
   const [contractAddress, setContractAddress] = useState<ContractAddress | undefined>(initialAddress);
+
+  // Show loading state if providers are not ready
+  if (!providers) {
+    return (
+      <div style={{ textAlign: 'center', padding: '20px' }}>
+        <div>Loading providers...</div>
+      </div>
+    );
+  }
 
   if (!contractAddress) {
     return <CounterAddressInput onAddressSubmit={(address) => setContractAddress(address)} initialAddress={initialAddress} />;

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Address } from '@midnight-ntwrk/wallet-api';
-import { Alert, Box, Button, CircularProgress, Dialog, keyframes, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Dialog, keyframes, Typography } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { type Logger } from 'pino';
@@ -26,7 +26,6 @@ export const WalletWidget = (
   isFloatingOpen: boolean,
   address?: Address,
   walletError?: MidnightWalletErrorType,
-  snackBarText?: string,
 ): React.ReactNode => {
   const box = (content: React.ReactNode): React.ReactNode => {
     return (
@@ -39,12 +38,6 @@ export const WalletWidget = (
         borderRadius={2}
         borderColor="grey.300"
       >
-        <Snackbar
-          autoHideDuration={null}
-          open={snackBarText !== undefined}
-          message={snackBarText}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        />
         {content}
       </Box>
     );

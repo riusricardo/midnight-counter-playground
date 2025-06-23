@@ -18,4 +18,10 @@ export type CounterPrivateState = {
   value: number;
 };
 
+export function createCounterPrivateState(): CounterPrivateState {
+  return {
+    value: 0
+  };
+}
+
 export const witnesses = {};

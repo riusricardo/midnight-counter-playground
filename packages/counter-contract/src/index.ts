@@ -17,3 +17,4 @@ export * as Counter from "./managed/counter/contract/index.cjs";
 export * from "./witnesses.js";
 export type { CounterPrivateState } from "./witnesses.js";
 export { witnesses } from "./witnesses.js";
+export { createCounterPrivateState } from "./witnesses.js";
