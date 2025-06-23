@@ -20,7 +20,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "lint": "eslint \"**/*.ts\""
   },
   "dependencies": {

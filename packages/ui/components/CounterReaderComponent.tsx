@@ -46,10 +46,10 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
   const [contractExists, setContractExists] = useState<boolean>(false);
   const [hasRealtimeUpdates, setHasRealtimeUpdates] = useState<boolean>(false);
 
-  // Wrapper function to safely call getCounterValueDirect
+  // Wrapper function to safely call getCounterValue
   const getCounterValueSafely = async (): Promise<bigint> => {
     // @ts-ignore - TypeScript incorrectly infers this as error type, but it returns Promise<bigint>
-    const result: any = await CounterAPI.getCounterValueDirect(providers, contractAddress);
+    const result: any = await CounterAPI.getCounterInfo(providers);
     return result as bigint;
   };
 
@@ -61,6 +61,9 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
     }
 
     try {
+      console.log('🔍 CounterComponent: Checking providers...');
+      console.log('providers object:', providers);
+      console.log('providers type:', typeof providers);
       setIsLoading(true);
       setError(null);
 

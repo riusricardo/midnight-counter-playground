@@ -22,7 +22,7 @@
   },
   "scripts": {
     "start": "http-server --port 8080 ./dist --proxy 'http://127.0.0.1:8080?'",
-    "build": "tsc && vite build",
+    "build": "rm -rf dist && tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint \"src/**/*.ts\""
   }

@@ -37,7 +37,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "test-api": "docker compose -f standalone.yml pull && DEBUG='testcontainers' vitest run"
   },
   "dependencies": {
