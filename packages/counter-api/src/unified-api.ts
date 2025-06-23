@@ -64,8 +64,8 @@ export class CounterAPI implements DeployedCounterAPI {
     this.state$ = this.providers.publicDataProvider
       .contractStateObservable(this.deployedContractAddress, { type: 'all' })
       .pipe(
-        map((contractState) => Counter.ledger(contractState.data)),
-        map((ledgerState) => ({
+        map((contractState: any) => Counter.ledger(contractState.data)),
+        map((ledgerState: any) => ({
           counterValue: ledgerState.round
         })),
         retry({
@@ -115,7 +115,7 @@ export class CounterAPI implements DeployedCounterAPI {
       console.log('Calling deployContract with shared contract instance...');
       const deployedContract = await deployContract(providers as any, {
         contract: counterContractInstance,
-        privateStateId: 'counterPrivateState',
+        privateStateKey: 'counterPrivateState',
         initialPrivateState: await CounterAPI.getPrivateState('counterPrivateState', providers.privateStateProvider),
       });
       
@@ -157,7 +157,7 @@ export class CounterAPI implements DeployedCounterAPI {
       const deployedContract = await findDeployedContract(providers as any, {
         contractAddress,
         contract: counterContractInstance,
-        privateStateId: 'counterPrivateState',
+        privateStateKey: 'counterPrivateState',
         initialPrivateState: state,
       });
       
@@ -251,7 +251,7 @@ export class CounterAPI implements DeployedCounterAPI {
     console.log('Checking contract state...');
     const state = await providers.publicDataProvider
       .queryContractState(contractAddress)
-      .then((contractState) => (contractState != null ? Counter.ledger(contractState.data).round : null));
+      .then((contractState: any) => (contractState != null ? Counter.ledger(contractState.data).round : null));
     console.log(`Counter state: ${state}`);
     return state;
   }
@@ -270,7 +270,7 @@ export class CounterAPI implements DeployedCounterAPI {
   }
 
     static async getOrCreateInitialPrivateState(
-    privateStateProvider: PrivateStateProvider<'counterPrivateState', CounterPrivateState>,
+    privateStateProvider: any,
   ): Promise<CounterPrivateState> {
     let state = await privateStateProvider.get('counterPrivateState');
     if (state === null) {
@@ -282,7 +282,7 @@ export class CounterAPI implements DeployedCounterAPI {
 
     private static async getPrivateState(
     privateStateKey: 'counterPrivateState',
-    providers: PrivateStateProvider<'counterPrivateState', CounterPrivateState>,
+    providers: any,
   ): Promise<CounterPrivateState> {
     const existingPrivateState = await providers.get(privateStateKey);
     const initialState = await this.getOrCreateInitialPrivateState(providers);

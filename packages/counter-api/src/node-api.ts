@@ -9,7 +9,7 @@ import {
   type WalletProvider,
 } from '@midnight-ntwrk/midnight-js-types';
 import { Transaction as ZswapTransaction } from '@midnight-ntwrk/zswap';
-import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import { getLedgerNetworkId, getZswapNetworkId, NetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { webcrypto } from 'node:crypto';
 import * as Rx from 'rxjs';
@@ -20,7 +20,6 @@ import { type Config, contractConfig, StandaloneConfig } from './config.js';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 import {
-  type CounterPrivateStateId,
   type CounterProviders,
   type DeployedCounterContract,
 } from './common-types.js';
@@ -40,7 +39,7 @@ export const configureProviders = async (
 ): Promise<CounterProviders> => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
-    privateStateProvider: levelPrivateStateProvider<typeof CounterPrivateStateId>({
+    privateStateProvider: levelPrivateStateProvider({
       privateStateStoreName: contractConfig.privateStateStoreName,
     }) as any,  // Type assertion to bypass strict typing
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
@@ -142,12 +141,12 @@ export const buildWalletAndWaitForFunds = async (
         serializedStream.on('finish', () => {
           serializedStream.close();
         });
-        wallet = await WalletBuilder.restore(indexer, indexerWS, proofServer, node, seed, serialized, 'info');
+        wallet = await WalletBuilder.restore(indexer, indexerWS, proofServer, node, seed, serialized);
         wallet.start();
         const stateObject = JSON.parse(serialized);
         if ((await isAnotherChain(wallet, Number(stateObject.offset))) === true) {
           console.log('The chain was reset, building wallet from scratch');
-          wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+          wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'warn');
           wallet.start();
         } else {
           const newState = await waitForSync(wallet);
@@ -160,7 +159,7 @@ export const buildWalletAndWaitForFunds = async (
             console.log(`SyncProgress.lag.applyGap: ${typedState.syncProgress?.lag.applyGap}`);
             console.log(`SyncProgress.lag.sourceGap: ${typedState.syncProgress?.lag.sourceGap}`);
             console.log('Wallet was not able to sync from restored state, building wallet from scratch');
-            wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+            wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'warn');
             wallet.start();
           }
         }
@@ -173,17 +172,17 @@ export const buildWalletAndWaitForFunds = async (
           console.log(error);
         }
         console.log('Wallet was not able to restore using the stored state, building wallet from scratch');
-        wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+        wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'warn');
         wallet.start();
       }
     } else {
       console.log('Wallet save file not found, building wallet from scratch');
-      wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+      wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'warn');
       wallet.start();
     }
   } else {
     console.log('File path for save file not found, building wallet from scratch');
-    wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+    wallet = await WalletBuilder.buildFromSeed(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'warn');
     wallet.start();
   }
 
