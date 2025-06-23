@@ -30,18 +30,43 @@ function findWorkspaceRoot(startDir: string): string {
     return '/workspace';
   }
 
-  let currentDir = startDir;
+  // Debug logging
+  console.log('[DEBUG] findWorkspaceRoot starting from:', startDir);
+  console.log('[DEBUG] process.cwd():', process.cwd());
+
+  // IMPORTANT: When imported from another package (like counter-cli), 
+  // startDir might be the CLI directory instead of the counter-api directory.
+  // We need to find the actual counter-api package directory first.
+  let searchDir = startDir;
+  
+  // If startDir appears to be the CLI directory, try to find counter-api
+  if (startDir.includes('counter-cli')) {
+    // Try to find the counter-api directory relative to CLI
+    const potentialApiDir = pathUtils.resolve(startDir, '..', 'counter-api', 'src');
+    console.log('[DEBUG] CLI detected, trying counter-api src at:', potentialApiDir);
+    if (existsSync(potentialApiDir)) {
+      searchDir = potentialApiDir;
+      console.log('[DEBUG] Found counter-api src directory, using:', searchDir);
+    } else {
+      console.log('[DEBUG] Counter-api src not found, falling back to startDir');
+    }
+  }
+
+  let currentDir = searchDir;
   
   while (currentDir !== pathUtils.dirname(currentDir)) {
+    console.log('[DEBUG] Checking directory:', currentDir);
     const packageJsonPath = pathUtils.join(currentDir, 'package.json');
     try {
       if (existsSync(packageJsonPath)) {
         const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+        console.log('[DEBUG] Found package.json with name:', packageJson.name);
         // Check if this is the workspace root by looking for workspaces field or specific structure
         if (packageJson.workspaces || 
             packageJson.name === 'counter-app' ||
             packageJson.name === 'midnight-counter-app' ||
             (packageJson.name && packageJson.name.includes('midnight-app-test'))) {
+          console.log('[DEBUG] Found workspace root at:', currentDir);
           return currentDir;
         }
       }
@@ -49,11 +74,14 @@ function findWorkspaceRoot(startDir: string): string {
       // Also check if this directory contains the packages folder with our expected structure
       const packagesDir = pathUtils.join(currentDir, 'packages');
       const counterContractDir = pathUtils.join(packagesDir, 'counter-contract');
+      console.log('[DEBUG] Checking for packages structure at:', packagesDir);
       if (existsSync(packagesDir) && existsSync(counterContractDir)) {
+        console.log('[DEBUG] Found packages structure, workspace root at:', currentDir);
         return currentDir;
       }
     } catch (e) {
       // Continue searching
+      console.log('[DEBUG] Error checking directory:', e instanceof Error ? e.message : String(e));
     }
     currentDir = pathUtils.dirname(currentDir);
   }
@@ -72,16 +100,38 @@ function findWorkspaceRoot(startDir: string): string {
     }
   }
   
-  // Final fallback to current directory
+  // Final fallback: If we still haven't found the workspace root,
+  // try going up from the startDir (which should be the counter-api src directory)
+  // This is important for cases where we're running from a subdirectory like counter-cli
+  let finalFallbackDir = startDir;
+  while (finalFallbackDir !== pathUtils.dirname(finalFallbackDir)) {
+    // Go up one level each time
+    finalFallbackDir = pathUtils.dirname(finalFallbackDir);
+    
+    const packagesDir = pathUtils.join(finalFallbackDir, 'packages');
+    const counterContractDir = pathUtils.join(packagesDir, 'counter-contract');
+    if (existsSync(packagesDir) && existsSync(counterContractDir)) {
+      return finalFallbackDir;
+    }
+  }
+  
+  // Absolute final fallback to current directory
   return startDir;
 }
 
 const workspaceRoot = findWorkspaceRoot(currentDir);
 
+// Override for CLI context - if workspace root still points to CLI directory, fix it
+const finalWorkspaceRoot = workspaceRoot.includes('/counter-cli') 
+  ? pathUtils.dirname(pathUtils.dirname(workspaceRoot)) // Go up two levels from counter-cli to workspace root
+  : workspaceRoot;
+
+console.log('[DEBUG] Final workspace root:', finalWorkspaceRoot);
+
 export const contractConfig = {
   privateStateStoreName: 'counter-private-state',
   zkConfigPath: isNodeEnvironment 
-    ? pathUtils.resolve(workspaceRoot, 'packages', 'counter-contract', 'src', 'managed', 'counter')
+    ? pathUtils.resolve(finalWorkspaceRoot, 'packages', 'counter-contract', 'src', 'managed', 'counter')
     : '/packages/counter-contract/src/managed/counter', // Browser fallback - relative path
 };
 
