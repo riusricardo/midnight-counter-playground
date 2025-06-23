@@ -21,6 +21,14 @@ import { existsSync, readFileSync, isNodeEnvironment, pathUtils } from './env.js
 export const currentDir = getDirPath();
 
 // Find the workspace root by looking for package.json or node_modules
+/**
+ * Find the workspace root directory by searching for specific markers.
+ * This function is designed to be robust across different environments:
+ * - Works in both ESM and CommonJS modules
+ * - Handles monorepos (yarn/pnpm/npm workspaces, nx, turbo)
+ * - Falls back gracefully if root can't be determined
+ * - Supports browser environments with sensible defaults
+ */
 function findWorkspaceRoot(startDir: string): string {
   // In browser environments, we can't access the file system
   // so we return a sensible default path
@@ -30,108 +38,121 @@ function findWorkspaceRoot(startDir: string): string {
     return '/workspace';
   }
 
-  // Debug logging
-  console.log('[DEBUG] findWorkspaceRoot starting from:', startDir);
-  console.log('[DEBUG] process.cwd():', process.cwd());
-
-  // IMPORTANT: When imported from another package (like counter-cli), 
-  // startDir might be the CLI directory instead of the counter-api directory.
-  // We need to find the actual counter-api package directory first.
-  let searchDir = startDir;
-  
-  // If startDir appears to be the CLI directory, try to find counter-api
-  if (startDir.includes('counter-cli')) {
-    // Try to find the counter-api directory relative to CLI
-    const potentialApiDir = pathUtils.resolve(startDir, '..', 'counter-api', 'src');
-    console.log('[DEBUG] CLI detected, trying counter-api src at:', potentialApiDir);
-    if (existsSync(potentialApiDir)) {
-      searchDir = potentialApiDir;
-      console.log('[DEBUG] Found counter-api src directory, using:', searchDir);
-    } else {
-      console.log('[DEBUG] Counter-api src not found, falling back to startDir');
-    }
+  // Use cache for performance if we've already computed this
+  const cachedRoot = (globalThis as any).__workspaceRootCache;
+  if (cachedRoot) {
+    console.log(`[DEBUG] Using cached workspace root: ${cachedRoot}`);
+    return cachedRoot;
   }
 
-  let currentDir = searchDir;
-  
-  while (currentDir !== pathUtils.dirname(currentDir)) {
-    console.log('[DEBUG] Checking directory:', currentDir);
-    const packageJsonPath = pathUtils.join(currentDir, 'package.json');
-    try {
-      if (existsSync(packageJsonPath)) {
-        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
-        console.log('[DEBUG] Found package.json with name:', packageJson.name);
-        // Check if this is the workspace root by looking for workspaces field or specific structure
-        if (packageJson.workspaces || 
-            packageJson.name === 'counter-app' ||
-            packageJson.name === 'midnight-counter-app' ||
-            (packageJson.name && packageJson.name.includes('midnight-app-test'))) {
-          console.log('[DEBUG] Found workspace root at:', currentDir);
+  // We'll search upwards from multiple starting points to be robust
+  // This covers cases where the package is installed in node_modules or linked in a workspace
+  const searchDirs = [
+    startDir, 
+    process.cwd(),
+    // Add additional common starting points if necessary
+    pathUtils.resolve(process.cwd(), '..'),
+    pathUtils.resolve(startDir, '..')
+  ];
+  const visited = new Set<string>();
+
+  // Common workspace root indicator files
+  const rootMarkers = [
+    // Monorepo tools
+    'turbo.json',              // Turborepo
+    'nx.json',                 // Nx
+    'lerna.json',              // Lerna
+    'pnpm-workspace.yaml',     // PNPM workspace
+    'rush.json',               // Rush
+    // Version control
+    '.git',                    // Git repository
+    // Config files often at root
+    '.eslintrc.js',            // ESLint
+    '.eslintrc.json',
+    'tsconfig.base.json',      // TypeScript project references
+    'jest.config.js',          // Jest
+    'babel.config.js',         // Babel
+    // Package managers
+    'yarn.lock',               // Yarn
+    'package-lock.json',       // NPM
+    'pnpm-lock.yaml'           // PNPM
+  ];
+
+  for (const dir of searchDirs) {
+    let currentDir = pathUtils.resolve(dir);
+
+    // Walk upwards through directory hierarchy
+    while (currentDir && !visited.has(currentDir)) {
+      visited.add(currentDir);
+      
+      // Check for workspace root markers
+      for (const marker of rootMarkers) {
+        const markerPath = pathUtils.join(currentDir, marker);
+        if (existsSync(markerPath)) {
+          console.log(`[DEBUG] Found workspace root with ${marker} at: ${currentDir}`);
+          // Cache the result for future calls
+          (globalThis as any).__workspaceRootCache = currentDir;
           return currentDir;
         }
       }
+
+      // Check for package.json with workspaces field (yarn/npm workspaces)
+      const packageJsonPath = pathUtils.join(currentDir, 'package.json');
+      if (existsSync(packageJsonPath)) {
+        try {
+          const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+          if (packageJson.workspaces) {
+            console.log(`[DEBUG] Found workspace root with package.json workspaces at: ${currentDir}`);
+            // Cache the result for future calls
+            (globalThis as any).__workspaceRootCache = currentDir;
+            return currentDir;
+          }
+          
+          // Check if this is a top-level package
+          // Often the root package's name is different from child packages
+          if (packageJson.name && packageJson.private === true) {
+            console.log(`[DEBUG] Found private root package at: ${currentDir}`);
+            // Cache the result for future calls
+            (globalThis as any).__workspaceRootCache = currentDir;
+            return currentDir;
+          }
+        } catch (e) {
+          // Ignore JSON parsing errors, continue searching
+          console.warn(`[WARN] Could not parse package.json at ${packageJsonPath}: ${e}`);
+        }
+      }
       
-      // Also check if this directory contains the packages folder with our expected structure
+      // Check for monorepo structure patterns
       const packagesDir = pathUtils.join(currentDir, 'packages');
-      const counterContractDir = pathUtils.join(packagesDir, 'counter-contract');
-      console.log('[DEBUG] Checking for packages structure at:', packagesDir);
-      if (existsSync(packagesDir) && existsSync(counterContractDir)) {
-        console.log('[DEBUG] Found packages structure, workspace root at:', currentDir);
+      const appsDir = pathUtils.join(currentDir, 'apps');
+      if (existsSync(packagesDir) && existsSync(appsDir)) {
+        console.log(`[DEBUG] Found workspace root with packages/ and apps/ at: ${currentDir}`);
+        // Cache the result for future calls
+        (globalThis as any).__workspaceRootCache = currentDir;
         return currentDir;
       }
-    } catch (e) {
-      // Continue searching
-      console.log('[DEBUG] Error checking directory:', e instanceof Error ? e.message : String(e));
-    }
-    currentDir = pathUtils.dirname(currentDir);
-  }
-  
-  // Fallback: try to find workspace root by going up from current directory
-  // This handles cases where we might be deep in a nested structure
-  if (isNodeEnvironment && typeof process !== 'undefined') {
-    let fallbackDir = process.cwd();
-    while (fallbackDir !== pathUtils.dirname(fallbackDir)) {
-      const packagesDir = pathUtils.join(fallbackDir, 'packages');
-      const counterContractDir = pathUtils.join(packagesDir, 'counter-contract');
-      if (existsSync(packagesDir) && existsSync(counterContractDir)) {
-        return fallbackDir;
+
+      // Move up one directory
+      const parentDir = pathUtils.dirname(currentDir);
+      if (parentDir === currentDir) {
+        break; // Reached root of file system
       }
-      fallbackDir = pathUtils.dirname(fallbackDir);
+      currentDir = parentDir;
     }
   }
-  
-  // Final fallback: If we still haven't found the workspace root,
-  // try going up from the startDir (which should be the counter-api src directory)
-  // This is important for cases where we're running from a subdirectory like counter-cli
-  let finalFallbackDir = startDir;
-  while (finalFallbackDir !== pathUtils.dirname(finalFallbackDir)) {
-    // Go up one level each time
-    finalFallbackDir = pathUtils.dirname(finalFallbackDir);
-    
-    const packagesDir = pathUtils.join(finalFallbackDir, 'packages');
-    const counterContractDir = pathUtils.join(packagesDir, 'counter-contract');
-    if (existsSync(packagesDir) && existsSync(counterContractDir)) {
-      return finalFallbackDir;
-    }
-  }
-  
-  // Absolute final fallback to current directory
-  return startDir;
+
+  console.log('[DEBUG] Workspace root not found, falling back to startDir.');
+  return startDir; // Absolute final fallback
 }
 
 const workspaceRoot = findWorkspaceRoot(currentDir);
 
-// Override for CLI context - if workspace root still points to CLI directory, fix it
-const finalWorkspaceRoot = workspaceRoot.includes('/counter-cli') 
-  ? pathUtils.dirname(pathUtils.dirname(workspaceRoot)) // Go up two levels from counter-cli to workspace root
-  : workspaceRoot;
-
-console.log('[DEBUG] Final workspace root:', finalWorkspaceRoot);
+console.log('[DEBUG] Final workspace root:', workspaceRoot);
 
 export const contractConfig = {
   privateStateStoreName: 'counter-private-state',
-  zkConfigPath: isNodeEnvironment 
-    ? pathUtils.resolve(finalWorkspaceRoot, 'packages', 'counter-contract', 'src', 'managed', 'counter')
+  zkConfigPath: isNodeEnvironment
+    ? pathUtils.resolve(workspaceRoot, 'packages', 'counter-contract', 'src', 'managed', 'counter')
     : '/packages/counter-contract/src/managed/counter', // Browser fallback - relative path
 };
 
