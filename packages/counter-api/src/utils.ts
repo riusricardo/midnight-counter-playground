@@ -1,3 +1,5 @@
+// Utility functions for API usage
+
 export const randomBytes = (length: number): Uint8Array => {
   const bytes = new Uint8Array(length);
   crypto.getRandomValues(bytes);

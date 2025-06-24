@@ -26,6 +26,11 @@
       "import": "./dist/unified-api.js",
       "require": "./dist/unified-api.js"
     },
+    "./browser-api": {
+      "types": "./dist/browser-api.d.ts",
+      "import": "./dist/browser-api.js",
+      "require": "./dist/browser-api.js"
+    },
     "./src/env-browser.ts": "./src/env-browser.ts",
     "./dist/env-browser": {
       "types": "./dist/env-browser.d.ts",

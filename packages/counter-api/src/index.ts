@@ -19,3 +19,4 @@ export * from './config.js';
 export * from './browser-config.js';
 export * from './common-types.js';
 export * from './node-api.js';
+export * from './utils.js';

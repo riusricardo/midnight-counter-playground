@@ -170,7 +170,7 @@ export class CounterAPI implements DeployedCounterAPI {
       console.error('Error connecting to contract:', error);
       
       if (error instanceof Error && error.message.includes('verifier key')) {
-        throw new Error(`Unable to connect to contract at ${contractAddress}. This contract may have been deployed with different circuit parameters or is not a compatible counter contract. Original error: ${error.message}`);
+        throw new Error(`Unable to connect to contract at ${contractAddress}. Original error: ${error.message}`);
       }
       throw error;
     }

@@ -1,3 +1,4 @@
+// Proof provider utilities for browser environment
 import type { ProofProvider, UnbalancedTransaction, ProveTxConfig } from '@midnight-ntwrk/midnight-js-types';
 import type { UnprovenTransaction } from '@midnight-ntwrk/ledger';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
@@ -19,8 +20,8 @@ export const proofClient = <K extends string>(
 export const noopProofClient = <K extends string>(): ProofProvider<K> => {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    proveTx(_tx: UnprovenTransaction, _proveTxConfig?: ProveTxConfig<K>): Promise<UnbalancedTransaction> {
-      return Promise.reject(new Error('Proof server not available'));
+    async proveTx(tx: UnprovenTransaction): Promise<UnbalancedTransaction> {
+      throw new Error('Proof client not implemented');
     },
   };
 };

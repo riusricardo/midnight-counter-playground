@@ -25,13 +25,7 @@ import {
   type DeployedCounterContract,
 } from './common-types.js';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
-
-// Node.js specific random bytes function
-export const randomBytes = (length: number): Uint8Array => {
-  const bytes = new Uint8Array(length);
-  webcrypto.getRandomValues(bytes);
-  return bytes;
-};
+import { randomBytes } from './utils.js';
 
 export const configureProviders = async (
   wallet: any, // Wallet & Resource,

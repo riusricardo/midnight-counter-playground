@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Logger } from 'pino';
 import { type Address, type CoinPublicKey } from '@midnight-ntwrk/wallet-api';
-import { type CounterCircuits } from '@repo/counter-api';
+import { type ImpureCounterCircuits } from '@repo/counter-api';
 import {
   type BalancedTransaction,
   createBalancedTx,
@@ -21,10 +21,10 @@ import { useLocalState } from '../hooks/useLocalState';
 import type { ZKConfigProvider, WalletProvider, MidnightProvider } from '@midnight-ntwrk/midnight-js-types';
 import { MidnightWalletErrorType, WalletWidget } from './WalletWidget';
 import { connectToWallet } from './connectToWallet';
-import { noopProofClient, proofClient } from './proofClient';
+import { noopProofClient, proofClient } from '@repo/counter-api/browser-api';
 import { WrappedPublicDataProvider } from './publicDataProvider';
 import { WrappedPrivateStateProvider } from './privateStateProvider';
-import { CachedFetchZkConfigProvider } from './zkConfigProvider';
+import { CachedFetchZkConfigProvider } from '@repo/counter-api/browser-api';
 
 // Replace isChromeBrowser and window/fetch usages with safe checks for build/SSR
 function isChromeBrowser(): boolean {
@@ -42,8 +42,8 @@ interface MidnightWalletState {
   widget?: React.ReactNode;
   walletAPI?: WalletAPI;
   privateStateProvider: any;
-  zkConfigProvider: ZKConfigProvider<CounterCircuits>;
-  proofProvider: ProofProvider<CounterCircuits>;
+  zkConfigProvider: ZKConfigProvider<ImpureCounterCircuits>;
+  proofProvider: ProofProvider<ImpureCounterCircuits>;
   publicDataProvider: PublicDataProvider;
   walletProvider: WalletProvider;
   midnightProvider: MidnightProvider;
@@ -133,7 +133,7 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
   };
 
   const zkConfigProvider = useMemo(
-    () => new CachedFetchZkConfigProvider<CounterCircuits>(window.location.origin, fetch.bind(window), providerCallback),
+    () => new CachedFetchZkConfigProvider<ImpureCounterCircuits>(window.location.origin, fetch.bind(window), providerCallback),
     [],
   );
   const publicDataProvider = useMemo(

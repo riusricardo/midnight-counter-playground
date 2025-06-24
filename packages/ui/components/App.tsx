@@ -5,51 +5,16 @@ import { ThemeProvider, Container, Box, Typography, Paper, Tabs, Tab } from '@mu
 import { theme } from '../config/theme.js';
 import { LocalStateProvider } from '../contexts/LocalStateProviderContext.js';
 import { RuntimeConfigurationProvider, useRuntimeConfiguration } from '../config/RuntimeConfiguration.js';
-import { MidnightWalletProvider, ProviderCallbackAction, useMidnightWallet, WalletAPI } from './MidnightWallet.js';
+import { MidnightWalletProvider, useMidnightWallet } from './MidnightWallet.js';
 import * as pino from 'pino';
 import { type NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { CounterApplication } from './CounterComponent.js';
 import { CounterReaderApplication } from './CounterReaderComponent.js';
 import { type Logger } from 'pino';
-import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
-import { PublicDataProvider, WalletProvider, MidnightProvider, PrivateStateProvider } from '@midnight-ntwrk/midnight-js-types';
-import { proofClient } from './proofClient.js';
-import { CachedFetchZkConfigProvider } from './zkConfigProvider.js';
-import { CounterPrivateState } from '@midnight-ntwrk/counter-contract';
-import { CounterCircuits, CounterProviders} from '@repo/counter-api';
+import { createCounterProviders } from '@repo/counter-api/browser-api';
+import type { CounterProviders } from '@repo/counter-api';
 
-const providers: (
-  publicDataProvider: PublicDataProvider,
-  walletProvider: WalletProvider,
-  midnightProvider: MidnightProvider,
-  walletAPI: WalletAPI,
-  callback: (action: ProviderCallbackAction) => void,
-) => CounterProviders = (
-  publicDataProvider: PublicDataProvider,
-  walletProvider: WalletProvider,
-  midnightProvider: MidnightProvider,
-  walletAPI: WalletAPI,
-  callback: (action: ProviderCallbackAction) => void,
-) => {
-  const privateStateProvider: PrivateStateProvider<'counterPrivateState', CounterPrivateState> = levelPrivateStateProvider({
-    privateStateStoreName: 'counter-private-state',
-  });
-  const proofProvider = proofClient(walletAPI.uris.proverServerUri);
-  return {
-    privateStateProvider,
-    publicDataProvider,
-    zkConfigProvider: new CachedFetchZkConfigProvider<CounterCircuits>(
-      window.location.origin,
-      fetch.bind(window),
-      callback,
-    ),
-    proofProvider,
-    walletProvider,
-    midnightProvider,
-  };
-};
-
-const CounterAppContent: React.FC<{ logger: Logger }> = ({ logger }) => {
+const CounterAppContent: React.FC<{ logger: Logger }> = () => {
   const walletState = useMidnightWallet();
   const [tabValue, setTabValue] = useState(0);
   const [counterProviders, setCounterProviders] = useState<CounterProviders | null>(null);
@@ -64,16 +29,16 @@ const CounterAppContent: React.FC<{ logger: Logger }> = ({ logger }) => {
     if (walletState.walletAPI && walletState.isConnected) {
       setProvidersLoading(true);
       try {
-        const midnightProviders = providers(
+        const midnightProviders = createCounterProviders(
           walletState.publicDataProvider,
           walletState.walletProvider,
           walletState.midnightProvider,
-          walletState.walletAPI,
+          walletState.walletAPI!,
           walletState.callback,
-        );
+        ) as CounterProviders;
         setCounterProviders(midnightProviders);
-      } catch (error) {
-        console.error('Failed to initialize providers:', error);
+      } catch {
+        // Failed to initialize providers - will be handled by the loading state
       } finally {
         setProvidersLoading(false);
       }

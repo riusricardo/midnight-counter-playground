@@ -18,4 +18,6 @@ export * from './unified-api.js';
 export * from './config.js';
 export * from './browser-config.js';
 export * from './common-types.js';
+export * from './browser-api.js';
+export * from './browser-types.js';
 // Note: node-api.js is excluded for browser compatibility

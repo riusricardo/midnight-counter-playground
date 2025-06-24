@@ -1,3 +1,4 @@
+// ZK Config provider with caching for browser environment
 import type { ProverKey, VerifierKey, ZKIR } from '@midnight-ntwrk/midnight-js-types';
 import { fetch } from 'cross-fetch';
 import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
@@ -30,9 +31,11 @@ export class CachedFetchZkConfigProvider<K extends string> extends FetchZkConfig
 
       const proverKey = await super.getProverKey(circuitId);
       this.cache.set(cacheKey, proverKey);
-      return proverKey;
-    } finally {
       this.callback('downloadProverDone');
+      return proverKey;
+    } catch (error) {
+      this.callback('downloadProverDone');
+      throw error;
     }
   }
 
