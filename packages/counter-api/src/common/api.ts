@@ -30,7 +30,7 @@ import {
   type CounterContract,
   type CounterProviders,
   type DeployedCounterContract,
-} from './common-types.js';
+} from './types.js';
 
 // Single shared contract instance to ensure consistency
 const counterContractInstance: CounterContract = new Counter.Contract(witnesses);
@@ -351,7 +351,7 @@ export class CounterAPI implements DeployedCounterAPI {
 
 // Exports for compatibility
 export { Counter, witnesses } from '@midnight-ntwrk/counter-contract';
-export type { CounterContract, CounterProviders, DeployedCounterContract } from './common-types.js';
+export type { CounterContract, CounterProviders, DeployedCounterContract } from './types.js';
 export { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 
 // Re-export currentDir from config for compatibility

@@ -6,8 +6,8 @@ import { PublicDataProvider, WalletProvider, MidnightProvider, PrivateStateProvi
 import { proofClient, noopProofClient } from './proof-client';
 import { CachedFetchZkConfigProvider } from './zk-config-provider';
 import { CounterPrivateState } from '@midnight-ntwrk/counter-contract';
-import { ImpureCounterCircuits, CounterProviders } from './common-types';
-import { WalletAPI, ProviderCallbackAction } from './browser-types';
+import { ImpureCounterCircuits, CounterProviders } from '../common/types';
+import { WalletAPI, ProviderCallbackAction } from './types';
 
 export { proofClient, noopProofClient } from './proof-client';
 export { CachedFetchZkConfigProvider } from './zk-config-provider';

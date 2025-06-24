@@ -17,7 +17,7 @@ import {
   getDefaultBrowserConfig, 
   type BrowserConfig, 
   type ConfigEnvironment 
-} from './config.js';
+} from '../common/config.js';
 
 export interface RuntimeConfiguration {
   LOGGING_LEVEL: string;

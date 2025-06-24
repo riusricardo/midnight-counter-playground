@@ -13,19 +13,19 @@ import { getLedgerNetworkId, getZswapNetworkId } from '@midnight-ntwrk/midnight-
 import { toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { webcrypto } from 'node:crypto';
 import * as Rx from 'rxjs';
-import * as env from './env.js';
+import * as env from '../common/env.js';
 import { WalletBuilder, type Resource } from '@midnight-ntwrk/wallet';
 import type { Wallet } from '@midnight-ntwrk/wallet-api';
-import { type Config, contractConfig, StandaloneConfig } from './config.js';
+import { type Config, contractConfig, StandaloneConfig } from '../common/config.js';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 import {
   type CounterPrivateStateId,
   type CounterProviders,
   type DeployedCounterContract,
-} from './common-types.js';
+} from '../common/types.js';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
-import { randomBytes } from './utils.js';
+import { randomBytes } from '../common/utils.js';
 
 export const configureProviders = async (
   wallet: any, // Wallet & Resource,

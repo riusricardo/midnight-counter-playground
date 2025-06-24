@@ -20,10 +20,10 @@ import type { DAppConnectorWalletAPI, ServiceUriConfig } from '@midnight-ntwrk/d
 import { useLocalState } from '../hooks/useLocalState';
 import type { ZKConfigProvider, WalletProvider, MidnightProvider } from '@midnight-ntwrk/midnight-js-types';
 import { MidnightWalletErrorType, WalletWidget } from './WalletWidget';
-import { connectToWallet } from './connectToWallet';
+import { connectToWallet } from '@repo/counter-api/browser';
 import { noopProofClient, proofClient } from '@repo/counter-api/browser-api';
-import { WrappedPublicDataProvider } from './publicDataProvider';
-import { WrappedPrivateStateProvider } from './privateStateProvider';
+import { WrappedPublicDataProvider } from '@repo/counter-api/browser';
+import { WrappedPrivateStateProvider } from '@repo/counter-api/browser';
 import { CachedFetchZkConfigProvider } from '@repo/counter-api/browser-api';
 
 // Replace isChromeBrowser and window/fetch usages with safe checks for build/SSR

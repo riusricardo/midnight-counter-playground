@@ -17,25 +17,30 @@
       "require": "./dist/index.js"
     },    
     "./node-api": {
-      "types": "./dist/node-api.d.ts",
-      "import": "./dist/node-api.js",
-      "require": "./dist/node-api.js"
+      "types": "./dist/node/api.d.ts",
+      "import": "./dist/node/api.js",
+      "require": "./dist/node/api.js"
     },
-    "./unified-api": {
-      "types": "./dist/unified-api.d.ts",
-      "import": "./dist/unified-api.js",
-      "require": "./dist/unified-api.js"
+    "./common-api": {
+      "types": "./dist/common/api.d.ts",
+      "import": "./dist/common/api.js",
+      "require": "./dist/common/api.js"
     },
     "./browser-api": {
-      "types": "./dist/browser-api.d.ts",
-      "import": "./dist/browser-api.js",
-      "require": "./dist/browser-api.js"
+      "types": "./dist/browser/api.d.ts",
+      "import": "./dist/browser/api.js",
+      "require": "./dist/browser/api.js"
     },
-    "./src/env-browser.ts": "./src/env-browser.ts",
-    "./dist/env-browser": {
-      "types": "./dist/env-browser.d.ts",
-      "import": "./dist/env-browser.js",
-      "require": "./dist/env-browser.js"
+    "./browser": {
+      "types": "./dist/browser/index.d.ts",
+      "import": "./dist/browser/index.js",
+      "require": "./dist/browser/index.js"
+    },
+    "./src/browser/env-browser.ts": "./src/browser/env-browser.ts",
+    "./dist/browser/env-browser": {
+      "types": "./dist/browser/env-browser.d.ts",
+      "import": "./dist/browser/env-browser.js",
+      "require": "./dist/browser/env-browser.js"
     }
   },
   "files": [

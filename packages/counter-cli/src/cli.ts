@@ -27,7 +27,7 @@ import {
   buildFreshWallet,
   configureProviders,
 } from '@repo/counter-api/node-api';
-import { setLogger, CounterAPI } from '@repo/counter-api/unified-api';
+import { setLogger, CounterAPI } from '@repo/counter-api/common-api';
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import { contractConfig } from '@repo/counter-api';
 

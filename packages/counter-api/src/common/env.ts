@@ -43,7 +43,7 @@ export const isBrowserEnvironment = !isNodeEnvironment;
 export const readFile = async (_path: string): Promise<string> => {
   try {
     // Dynamically import Node.js implementation
-    const { readFile } = await import('./env-node.js');
+    const { readFile } = await import('../node/env-node.js');
     return await readFile(_path);
   } catch (e) {
     throw new Error('File system access is not available in this context');
@@ -52,7 +52,7 @@ export const readFile = async (_path: string): Promise<string> => {
 
 export const writeFile = async (_path: string, _content: string): Promise<void> => {
   try {
-    const { writeFile } = await import('./env-node.js');
+    const { writeFile } = await import('../node/env-node.js');
     return await writeFile(_path, _content);
   } catch (e) {
     throw new Error('File system access is not available in this context');
@@ -61,7 +61,7 @@ export const writeFile = async (_path: string, _content: string): Promise<void> 
 
 export const fileExists = async (_path: string): Promise<boolean> => {
   if (isNodeEnvironment) {
-    const { fileExists } = await import('./env-node.js');
+    const { fileExists } = await import('../node/env-node.js');
     return fileExists(_path);
   }
   return false;
@@ -173,7 +173,7 @@ export const existsSync = (function(): (path: string) => boolean {
 
 export const mkdir = async (_path: string, options?: { recursive?: boolean }): Promise<void> => {
   if (isNodeEnvironment) {
-    const { mkdir } = await import('./env-node.js');
+    const { mkdir } = await import('../node/env-node.js');
     await mkdir(_path, options);
     return;
   }

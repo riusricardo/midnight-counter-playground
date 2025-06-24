@@ -7,7 +7,7 @@ import type {
 } from '@midnight-ntwrk/midnight-js-types';
 import type { Logger } from 'pino';
 import type { ContractAddress, ContractState } from '@midnight-ntwrk/compact-runtime';
-import { retryWithBackoff } from './retryWithBackoff';
+import { retryWithBackoff } from './retry-with-backoff';
 import type { TransactionId, ZswapChainState } from '@midnight-ntwrk/ledger';
 import type { Observable } from 'rxjs';
 

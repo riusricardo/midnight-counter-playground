@@ -14,10 +14,11 @@
 // limitations under the License.
 
 // Browser-specific exports - excludes Node.js-only functionality
-export * from './unified-api.js';
-export * from './config.js';
-export * from './browser-config.js';
-export * from './common-types.js';
-export * from './browser-api.js';
-export * from './browser-types.js';
+export * from './common/api.js';
+export * from './common/config.js';
+export * from './browser/config.js';
+export * from './common/types.js';
+export * from './browser/api.js';
+export * from './browser/types.js';
+export * from './common/utils.js';
 // Note: node-api.js is excluded for browser compatibility

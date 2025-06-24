@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Export unified API for React compatibility
-export * from './unified-api.js';
-export * from './config.js';
-export * from './browser-config.js';
-export * from './common-types.js';
-export * from './node-api.js';
-export * from './utils.js';
+// Export common API for React compatibility
+export * from './common/api.js';
+export * from './common/config.js';
+export * from './browser/config.js';
+export * from './common/types.js';
+export * from './node/api.js';
+export * from './common/utils.js';
