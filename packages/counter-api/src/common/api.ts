@@ -17,20 +17,19 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { Counter, type CounterPrivateState, createCounterPrivateState, witnesses } from '@midnight-ntwrk/counter-contract';
-import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
-  type FinalizedTxData,
-} from '@midnight-ntwrk/midnight-js-types';
+  Counter,
+  type CounterPrivateState,
+  createCounterPrivateState,
+  witnesses,
+} from '@midnight-ntwrk/counter-contract';
+import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
+import { type FinalizedTxData } from '@midnight-ntwrk/midnight-js-types';
 
 import { assertIsContractAddress, toHex } from '@midnight-ntwrk/midnight-js-utils';
 import type { PrivateStateProvider } from '@midnight-ntwrk/midnight-js-types';
 import { map, type Observable, retry } from 'rxjs';
-import {
-  type CounterContract,
-  type CounterProviders,
-  type DeployedCounterContract,
-} from './types.js';
+import { type CounterContract, type CounterProviders, type DeployedCounterContract } from './types.js';
 
 // Single shared contract instance to ensure consistency
 const counterContractInstance: CounterContract = new Counter.Contract(witnesses);
@@ -58,7 +57,7 @@ export interface TransactionResponse {
 export class CounterAPI implements DeployedCounterAPI {
   private constructor(
     public readonly deployedContract: DeployedCounterContract,
-    public readonly providers: CounterProviders
+    public readonly providers: CounterProviders,
   ) {
     this.deployedContractAddress = deployedContract.deployTxData.public.contractAddress;
     this.state$ = this.providers.publicDataProvider
@@ -66,11 +65,11 @@ export class CounterAPI implements DeployedCounterAPI {
       .pipe(
         map((contractState) => Counter.ledger(contractState.data)),
         map((ledgerState) => ({
-          counterValue: ledgerState.round
+          counterValue: ledgerState.round,
         })),
         retry({
           delay: 500, // retry websocket connection if it fails
-        })
+        }),
       );
   }
 
@@ -102,41 +101,41 @@ export class CounterAPI implements DeployedCounterAPI {
    * @param privateState - Initial private state for the contract
    * @returns CounterAPI instance
    */
-  static async deploy(
-    providers: CounterProviders,
-    privateState: CounterPrivateState
-  ): Promise<CounterAPI> {
+  static async deploy(providers: CounterProviders, privateState: CounterPrivateState): Promise<CounterAPI> {
     console.log('Deploying counter contract...');
-    
+
     try {
       // Validate providers
       CounterAPI.validateProviders(providers);
-      
+
       console.log('Calling deployContract with shared contract instance...');
       const deployedContract = await deployContract(providers as any, {
         contract: counterContractInstance,
         privateStateId: 'counterPrivateState',
         initialPrivateState: await CounterAPI.getPrivateState('counterPrivateState', providers.privateStateProvider),
       });
-      
+
       console.log(`Deployed contract at address: ${deployedContract.deployTxData.public.contractAddress}`);
-      
+
       const typedContract = deployedContract as unknown as DeployedCounterContract;
-      
+
       // Always return CounterAPI instance
       return new CounterAPI(typedContract, providers);
-      
     } catch (error) {
       console.error('Contract deployment failed:', error);
-      
+
       if (error instanceof Error && error.message.includes('verifier key')) {
-        throw new Error(`Contract deployment failed due to verifier key compatibility issue. This may be due to version mismatch between the contract and runtime environment. Please ensure your client and network are using compatible versions. Original error: ${error.message}`);
+        throw new Error(
+          `Contract deployment failed due to verifier key compatibility issue. This may be due to version mismatch between the contract and runtime environment. Please ensure your client and network are using compatible versions. Original error: ${error.message}`,
+        );
       }
-      
+
       if (error instanceof Error && error.message.includes('Unsupported version')) {
-        throw new Error(`Contract deployment failed due to version incompatibility. The contract runtime version does not match the client version. Please check that you're using compatible versions of the Midnight SDK. Original error: ${error.message}`);
+        throw new Error(
+          `Contract deployment failed due to version incompatibility. The contract runtime version does not match the client version. Please check that you're using compatible versions of the Midnight SDK. Original error: ${error.message}`,
+        );
       }
-      
+
       throw error;
     }
   }
@@ -147,10 +146,7 @@ export class CounterAPI implements DeployedCounterAPI {
    * @param contractAddress - Address of the existing contract
    * @returns CounterAPI instance
    */
-  static async connect(
-    providers: CounterProviders,
-    contractAddress: ContractAddress | string
-  ): Promise<CounterAPI> {
+  static async connect(providers: CounterProviders, contractAddress: ContractAddress | string): Promise<CounterAPI> {
     console.log(`Connecting to counter contract at ${contractAddress}...`);
     const state = await this.getOrCreateInitialPrivateState(providers.privateStateProvider);
     try {
@@ -160,15 +156,15 @@ export class CounterAPI implements DeployedCounterAPI {
         privateStateId: 'counterPrivateState',
         initialPrivateState: state,
       });
-      
+
       console.log('Successfully connected to contract');
       const typedContract = deployedContract as unknown as DeployedCounterContract;
-      
+
       // Always return CounterAPI instance
       return new CounterAPI(typedContract, providers);
     } catch (error) {
       console.error('Error connecting to contract:', error);
-      
+
       if (error instanceof Error && error.message.includes('verifier key')) {
         throw new Error(`Unable to connect to contract at ${contractAddress}. Original error: ${error.message}`);
       }
@@ -184,10 +180,10 @@ export class CounterAPI implements DeployedCounterAPI {
   static async incrementWithTxInfo(counterApi: CounterAPI): Promise<TransactionResponse> {
     console.log('Incrementing...');
     const finalizedTxData = await counterApi.deployedContract.callTx.increment();
-    
+
     // Extract transaction information defensively
     let txInfo: TransactionResponse = {};
-    
+
     if (finalizedTxData && typeof finalizedTxData === 'object') {
       if ('public' in finalizedTxData && finalizedTxData.public) {
         const pub = finalizedTxData.public;
@@ -196,7 +192,9 @@ export class CounterAPI implements DeployedCounterAPI {
           txHash: pub.txHash,
           blockHeight: pub.blockHeight,
         };
-        console.log(`Transaction ${txInfo.txId ?? txInfo.txHash ?? 'unknown'} added in block ${txInfo.blockHeight ?? 'unknown'}`);
+        console.log(
+          `Transaction ${txInfo.txId ?? txInfo.txHash ?? 'unknown'} added in block ${txInfo.blockHeight ?? 'unknown'}`,
+        );
       } else {
         // Handle direct transaction data
         const data = finalizedTxData as any;
@@ -205,7 +203,9 @@ export class CounterAPI implements DeployedCounterAPI {
           txHash: data.txHash,
           blockHeight: data.blockHeight,
         };
-        console.log(`Transaction ${txInfo.txId ?? txInfo.txHash ?? 'unknown'} added in block ${txInfo.blockHeight ?? 'unknown'}`);
+        console.log(
+          `Transaction ${txInfo.txId ?? txInfo.txHash ?? 'unknown'} added in block ${txInfo.blockHeight ?? 'unknown'}`,
+        );
       }
     } else {
       console.log('Transaction finalized:', finalizedTxData);
@@ -220,7 +220,7 @@ export class CounterAPI implements DeployedCounterAPI {
    * @returns Object with counter value and contract address
    */
   static async getCounterInfo(
-    counterApi: CounterAPI
+    counterApi: CounterAPI,
   ): Promise<{ counterValue: bigint | null; contractAddress: ContractAddress }> {
     const contractAddress = counterApi.deployedContractAddress;
     try {
@@ -233,7 +233,9 @@ export class CounterAPI implements DeployedCounterAPI {
       return { contractAddress, counterValue };
     } catch (error) {
       console.error('Error reading counter value directly:', error);
-      throw new Error(`Unable to read counter value from contract at ${contractAddress}. The contract may not be a valid counter contract or may be incompatible.`);
+      throw new Error(
+        `Unable to read counter value from contract at ${contractAddress}. The contract may not be a valid counter contract or may be incompatible.`,
+      );
     }
   }
 
@@ -243,10 +245,7 @@ export class CounterAPI implements DeployedCounterAPI {
    * @param contractAddress - The contract address to query
    * @returns The counter value or null if not found
    */
-  static async getCounterState(
-    providers: CounterProviders,
-    contractAddress: ContractAddress,
-  ): Promise<bigint | null> {
+  static async getCounterState(providers: CounterProviders, contractAddress: ContractAddress): Promise<bigint | null> {
     assertIsContractAddress(contractAddress);
     console.log('Checking contract state...');
     const state = await providers.publicDataProvider
@@ -269,7 +268,7 @@ export class CounterAPI implements DeployedCounterAPI {
     }
   }
 
-    static async getOrCreateInitialPrivateState(
+  static async getOrCreateInitialPrivateState(
     privateStateProvider: PrivateStateProvider<'counterPrivateState', CounterPrivateState>,
   ): Promise<CounterPrivateState> {
     let state = await privateStateProvider.get('counterPrivateState');
@@ -280,7 +279,7 @@ export class CounterAPI implements DeployedCounterAPI {
     return state;
   }
 
-    private static async getPrivateState(
+  private static async getPrivateState(
     privateStateKey: 'counterPrivateState',
     providers: PrivateStateProvider<'counterPrivateState', CounterPrivateState>,
   ): Promise<CounterPrivateState> {
@@ -322,15 +321,15 @@ export class CounterAPI implements DeployedCounterAPI {
     if (!providers) {
       throw new Error('CounterProviders is required for deployment');
     }
-    
+
     if (!providers.publicDataProvider) {
       throw new Error('PublicDataProvider is required for deployment');
     }
-    
+
     if (!providers.privateStateProvider) {
       throw new Error('PrivateStateProvider is required for deployment');
     }
-    
+
     if (!providers.walletProvider) {
       throw new Error('WalletProvider is required for deployment');
     }
@@ -361,6 +360,6 @@ export function setLogger(_logger: any) {
   // Logger functionality replaced with console.log
 }
 
-// Note: Node.js specific functions (buildWalletAndWaitForFunds, buildFreshWallet, etc.) 
+// Note: Node.js specific functions (buildWalletAndWaitForFunds, buildFreshWallet, etc.)
 // are available in './node-api' for CLI compatibility, but are not exported here
 // to maintain browser compatibility

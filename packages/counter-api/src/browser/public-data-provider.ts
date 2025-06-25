@@ -22,7 +22,11 @@ export class WrappedPublicDataProvider implements PublicDataProvider {
     contractAddress: ContractAddress,
     config?: BlockHeightConfig | BlockHashConfig,
   ): Promise<ContractState | null> {
-    return retryWithBackoff(() => this.wrapped.queryContractState(contractAddress, config), 'queryContractState', this.logger);
+    return retryWithBackoff(
+      () => this.wrapped.queryContractState(contractAddress, config),
+      'queryContractState',
+      this.logger,
+    );
   }
 
   queryZSwapAndContractState(
@@ -45,11 +49,19 @@ export class WrappedPublicDataProvider implements PublicDataProvider {
   }
 
   watchForContractState(contractAddress: ContractAddress): Promise<ContractState> {
-    return retryWithBackoff(() => this.wrapped.watchForContractState(contractAddress), 'watchForContractState', this.logger);
+    return retryWithBackoff(
+      () => this.wrapped.watchForContractState(contractAddress),
+      'watchForContractState',
+      this.logger,
+    );
   }
 
   watchForDeployTxData(contractAddress: ContractAddress): Promise<FinalizedTxData> {
-    return retryWithBackoff(() => this.wrapped.watchForDeployTxData(contractAddress), 'watchForDeployTxData', this.logger);
+    return retryWithBackoff(
+      () => this.wrapped.watchForDeployTxData(contractAddress),
+      'watchForDeployTxData',
+      this.logger,
+    );
   }
 
   watchForTxData(txId: TransactionId): Promise<FinalizedTxData> {

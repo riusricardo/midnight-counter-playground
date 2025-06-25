@@ -23,7 +23,12 @@ export default defineConfig({
           process: 'process',
         }),
       ],
-      external: ['@midnight-ntwrk/midnight-js-node-zk-config-provider', 'fetch-blob', 'node-domexception', 'formdata-polyfill'],
+      external: [
+        '@midnight-ntwrk/midnight-js-node-zk-config-provider',
+        'fetch-blob',
+        'node-domexception',
+        'formdata-polyfill',
+      ],
     },
   },
   plugins: [

@@ -143,7 +143,8 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
           errorMessage =
             'Transaction failed due to validation error. This may be due to incomplete provider setup or network issues.';
         } else if (err.message.includes('verifier key')) {
-          errorMessage = 'Contract verification failed. The contract version may be incompatible with the current network.';
+          errorMessage =
+            'Contract verification failed. The contract version may be incompatible with the current network.';
         } else if (err.message.includes('proof')) {
           errorMessage = 'Proof generation failed. Please check your connection to the proof server.';
         } else {

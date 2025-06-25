@@ -19,24 +19,20 @@ import type { Wallet } from '@midnight-ntwrk/wallet-api';
 import { type Config, contractConfig, StandaloneConfig } from '../common/config.js';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-import {
-  type CounterPrivateStateId,
-  type CounterProviders,
-  type DeployedCounterContract,
-} from '../common/types.js';
+import { type CounterPrivateStateId, type CounterProviders, type DeployedCounterContract } from '../common/types.js';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { randomBytes } from '../common/utils.js';
 
 export const configureProviders = async (
   wallet: any, // Wallet & Resource,
   config: Config,
-  zkConfigProvider: any // Should be ZKConfigProvider<'increment'>, but kept as any for flexibility
+  zkConfigProvider: any, // Should be ZKConfigProvider<'increment'>, but kept as any for flexibility
 ): Promise<CounterProviders> => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
     privateStateProvider: levelPrivateStateProvider<typeof CounterPrivateStateId>({
       privateStateStoreName: contractConfig.privateStateStoreName,
-    }) as any,  // Type assertion to bypass strict typing
+    }) as any, // Type assertion to bypass strict typing
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
     zkConfigProvider: zkConfigProvider as any, // injected
     proofProvider: httpClientProofProvider(config.proofServer) as any,
@@ -45,7 +41,6 @@ export const configureProviders = async (
   } as CounterProviders;
 };
 
-
 export const createWalletAndMidnightProvider = async (wallet: Wallet): Promise<WalletProvider & any> => {
   const state = await Rx.firstValueFrom(wallet.state());
   return {
@@ -53,7 +48,10 @@ export const createWalletAndMidnightProvider = async (wallet: Wallet): Promise<W
     encryptionPublicKey: (state as any).encryptionPublicKey,
     balanceTx(tx: UnbalancedTransaction, newCoins: CoinInfo[]): Promise<BalancedTransaction> {
       return wallet
-        .balanceTransaction(ZswapTransaction.deserialize(tx.serialize(getLedgerNetworkId()), getZswapNetworkId()), newCoins)
+        .balanceTransaction(
+          ZswapTransaction.deserialize(tx.serialize(getLedgerNetworkId()), getZswapNetworkId()),
+          newCoins,
+        )
         .then((tx: any) => wallet.proveTransaction(tx))
         .then((zswapTx: any) => Transaction.deserialize(zswapTx.serialize(getZswapNetworkId()), getLedgerNetworkId()))
         .then(createBalancedTx);
@@ -154,7 +152,15 @@ export const buildWalletAndWaitForFunds = async (
             console.log(`SyncProgress.lag.applyGap: ${typedState.syncProgress?.lag.applyGap}`);
             console.log(`SyncProgress.lag.sourceGap: ${typedState.syncProgress?.lag.sourceGap}`);
             console.log('Wallet was not able to sync from restored state, building wallet from scratch');
-            wallet = await WalletBuilder.build(indexer, indexerWS, proofServer, node, seed, getZswapNetworkId(), 'info');
+            wallet = await WalletBuilder.build(
+              indexer,
+              indexerWS,
+              proofServer,
+              node,
+              seed,
+              getZswapNetworkId(),
+              'info',
+            );
             wallet.start();
           }
         }

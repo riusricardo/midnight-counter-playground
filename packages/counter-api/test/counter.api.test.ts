@@ -21,7 +21,7 @@ import { setLogger, CounterAPI, currentDir } from '@repo/counter-api';
 import { TestEnvironment } from './commons';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
-import { contractConfig, createLogger} from '@repo/counter-api';
+import { contractConfig, createLogger } from '@repo/counter-api';
 
 const logDir = path.resolve(currentDir, '..', 'logs', 'tests', `${new Date().toISOString()}.log`);
 const logger = await createLogger(logDir);

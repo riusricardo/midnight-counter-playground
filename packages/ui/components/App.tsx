@@ -46,7 +46,14 @@ const CounterAppContent: React.FC<{ logger: Logger }> = () => {
       setCounterProviders(null);
       setProvidersLoading(false);
     }
-  }, [walletState.walletAPI, walletState.isConnected, walletState.publicDataProvider, walletState.walletProvider, walletState.midnightProvider, walletState.callback]);
+  }, [
+    walletState.walletAPI,
+    walletState.isConnected,
+    walletState.publicDataProvider,
+    walletState.walletProvider,
+    walletState.midnightProvider,
+    walletState.callback,
+  ]);
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -63,7 +70,7 @@ const CounterAppContent: React.FC<{ logger: Logger }> = () => {
               <Tab label="Deploy & Manage" />
               <Tab label="Read Existing Contract" />
             </Tabs>
-            
+
             {providersLoading ? (
               <Box sx={{ textAlign: 'center', py: 3 }}>
                 <Typography>Loading providers...</Typography>

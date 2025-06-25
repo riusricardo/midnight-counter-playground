@@ -3,9 +3,7 @@
   "private": true,
   "workspaces": [
     "apps/*",
-    "packages/*",
-    "packages/compact",
-    "packages/counter-cli"
+    "packages/*"
   ],
   "scripts": {
     "compact": "turbo run compact",
@@ -16,7 +14,8 @@
     "test-against-testnet": "yarn --cwd packages/counter-cli run test-against-testnet",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "lint": "turbo run lint",
-    "test-api": "turbo run test-api --filter=@repo/counter-api"
+    "test-api": "turbo run test-api --filter=@repo/counter-api",
+    "test-contract": "turbo run test --filter=@midnight-ntwrk/counter-contract"
   },
   "dependencies": {
     "@eslint/js": "^9.28.0",

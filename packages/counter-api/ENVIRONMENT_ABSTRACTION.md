@@ -8,12 +8,12 @@ The counter-api package needs to work in both Node.js and browser environments, 
 
 Different environments have different capabilities:
 
-| Capability | Node.js | Browser |
-|------------|---------|---------|
-| File System Access | ✅ Full access | ❌ Not available |
-| Node.js Modules | ✅ Available | ❌ Need polyfills |
-| Streams | ✅ Real streams | ❌ Need mocks |
-| Path Resolution | ✅ `__dirname` available | ❌ Uses `import.meta.url` |
+| Capability         | Node.js                  | Browser                   |
+| ------------------ | ------------------------ | ------------------------- |
+| File System Access | ✅ Full access           | ❌ Not available          |
+| Node.js Modules    | ✅ Available             | ❌ Need polyfills         |
+| Streams            | ✅ Real streams          | ❌ Need mocks             |
+| Path Resolution    | ✅ `__dirname` available | ❌ Uses `import.meta.url` |
 
 ## Solution Architecture
 
@@ -35,7 +35,7 @@ Application Code
 ### Core Files
 
 - **`src/env.ts`** - Main abstraction layer with runtime detection
-- **`src/env-node.ts`** - Node.js-specific implementations  
+- **`src/env-node.ts`** - Node.js-specific implementations
 - **`src/env-browser.ts`** - Browser-compatible stubs and fallbacks
 - **`src/path-resolver.ts`** - Universal path resolution (see [PATH_RESOLUTION.md](./PATH_RESOLUTION.md))
 
@@ -50,9 +50,8 @@ Application Code
 
 ```typescript
 // Detects environment at runtime
-export const isNodeEnvironment = typeof process !== 'undefined' && 
-  process.versions != null && 
-  process.versions.node != null;
+export const isNodeEnvironment =
+  typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 
 // Conditionally imports the right implementation
 export const readFile = async (path: string): Promise<string> => {
@@ -141,10 +140,10 @@ stream.on('error', (err) => {
 
 ## Files Reference
 
-| File | Purpose | Used In |
-|------|---------|---------|
-| `env.ts` | Main abstraction | All environments |
-| `env-node.ts` | Node.js implementation | Node.js only |
-| `env-browser.ts` | Browser fallbacks | Browser only |
+| File             | Purpose                | Used In          |
+| ---------------- | ---------------------- | ---------------- |
+| `env.ts`         | Main abstraction       | All environments |
+| `env-node.ts`    | Node.js implementation | Node.js only     |
+| `env-browser.ts` | Browser fallbacks      | Browser only     |
 
 This architecture ensures the counter-api works seamlessly across different JavaScript environments while maintaining type safety and clear error handling.

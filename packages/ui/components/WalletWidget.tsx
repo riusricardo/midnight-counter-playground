@@ -55,8 +55,8 @@ export const WalletWidget = (
     if (walletError === MidnightWalletErrorType.UNAUTHORIZED) {
       error = (
         <Alert severity="error">
-          Connection Failed: You did not authorize the DApp to connect to your Midnight wallet. Please try again if you wish to
-          proceed.
+          Connection Failed: You did not authorize the DApp to connect to your Midnight wallet. Please try again if you
+          wish to proceed.
         </Alert>
       );
     } else if (walletError === MidnightWalletErrorType.WALLET_NOT_FOUND) {
@@ -64,7 +64,11 @@ export const WalletWidget = (
         <Alert severity="error">
           Connection Failed: Could not find Midnight Lace wallet
           <br />
-          <a href={'https://docs.midnight.network/develop/tutorial/using/chrome-ext'} target="_blank" rel="noopener noreferrer">
+          <a
+            href={'https://docs.midnight.network/develop/tutorial/using/chrome-ext'}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Learn how to install the wallet to use this application.
           </a>
         </Alert>
@@ -74,7 +78,11 @@ export const WalletWidget = (
         <Alert severity="error">
           {`Error: ${walletError.replace(/_/g, ' ')}.`}
           <br />
-          <a href={'https://docs.midnight.network/develop/tutorial/using/chrome-ext'} target="_blank" rel="noopener noreferrer">
+          <a
+            href={'https://docs.midnight.network/develop/tutorial/using/chrome-ext'}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Learn how to resolve this issue.
           </a>
         </Alert>
@@ -100,7 +108,12 @@ export const WalletWidget = (
         >
           <Button startIcon={icon} onClick={connectOrShowWallet} size="small" variant={'outlined'}>
             {address
-              ? 'Connected: ' + address.substring(0, 6) + '...' + address.substring(22, 26) + '...' + address.substring(124, 132)
+              ? 'Connected: ' +
+                address.substring(0, 6) +
+                '...' +
+                address.substring(22, 26) +
+                '...' +
+                address.substring(124, 132)
               : 'Connect Wallet'}
           </Button>
         </div>

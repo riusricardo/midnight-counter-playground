@@ -40,7 +40,11 @@ export const useCounterReader = () => {
   return context;
 };
 
-export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ contractAddress, providers, children }) => {
+export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
+  contractAddress,
+  providers,
+  children,
+}) => {
   const [counterApi, setCounterApi] = useState<CounterAPI | null>(null);
   const [counterState, setCounterState] = useState<CounterState | null>(null);
   const [counterValue, setCounterValue] = useState<bigint | null>(null);
@@ -128,7 +132,9 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
           setIsLoading(false);
 
           // Note: No real-time updates available in this mode
-          console.log('Successfully read counter value directly from public state. Real-time updates are not available.');
+          console.log(
+            'Successfully read counter value directly from public state. Real-time updates are not available.',
+          );
         } catch (directError) {
           throw new Error(
             `Unable to read from this contract. It may be incompatible or corrupted. Subscription error: ${subscriptionError instanceof Error ? subscriptionError.message : String(subscriptionError)}. Direct read error: ${directError instanceof Error ? directError.message : String(directError)}`,
@@ -206,7 +212,8 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
           errorMessage =
             'Transaction failed due to validation error. This may be due to incomplete provider setup or network issues.';
         } else if (err.message.includes('verifier key')) {
-          errorMessage = 'Contract verification failed. The contract version may be incompatible with the current network.';
+          errorMessage =
+            'Contract verification failed. The contract version may be incompatible with the current network.';
         } else if (err.message.includes('proof')) {
           errorMessage = 'Proof generation failed. Please check your connection to the proof server.';
         } else {
@@ -549,7 +556,9 @@ export const CounterReaderApplication: React.FC<{
   }
 
   if (!contractAddress) {
-    return <CounterAddressInput onAddressSubmit={(address) => setContractAddress(address)} initialAddress={initialAddress} />;
+    return (
+      <CounterAddressInput onAddressSubmit={(address) => setContractAddress(address)} initialAddress={initialAddress} />
+    );
   }
 
   return (

@@ -5,7 +5,9 @@ import { concatMap, filter, firstValueFrom, interval, map, of, take, tap, throwE
 import { pipe as fnPipe } from 'fp-ts/function';
 import semver from 'semver';
 
-export const connectToWallet = (logger: Logger): Promise<{ wallet: DAppConnectorWalletAPI; uris: ServiceUriConfig }> => {
+export const connectToWallet = (
+  logger: Logger,
+): Promise<{ wallet: DAppConnectorWalletAPI; uris: ServiceUriConfig }> => {
   const COMPATIBLE_CONNECTOR_API_VERSION = '1.x';
 
   return firstValueFrom(

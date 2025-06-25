@@ -134,7 +134,12 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
   };
 
   const zkConfigProvider = useMemo(
-    () => new CachedFetchZkConfigProvider<ImpureCounterCircuits>(window.location.origin, fetch.bind(window), providerCallback),
+    () =>
+      new CachedFetchZkConfigProvider<ImpureCounterCircuits>(
+        window.location.origin,
+        fetch.bind(window),
+        providerCallback,
+      ),
     [],
   );
   const publicDataProvider = useMemo(
@@ -305,7 +310,15 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
         midnightProvider,
       },
     }));
-  }, [walletAPI, privateStateProvider, zkConfigProvider, proofProvider, publicDataProvider, walletProvider, midnightProvider]);
+  }, [
+    walletAPI,
+    privateStateProvider,
+    zkConfigProvider,
+    proofProvider,
+    publicDataProvider,
+    walletProvider,
+    midnightProvider,
+  ]);
 
   useEffect(() => {
     setWalletState((state) => ({

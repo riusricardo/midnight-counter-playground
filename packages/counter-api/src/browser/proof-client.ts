@@ -3,15 +3,10 @@ import type { ProofProvider, UnbalancedTransaction, ProveTxConfig } from '@midni
 import type { UnprovenTransaction } from '@midnight-ntwrk/ledger';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 
-export const proofClient = <K extends string>(
-  url: string,
-): ProofProvider<K> => {
+export const proofClient = <K extends string>(url: string): ProofProvider<K> => {
   const httpClientProvider = httpClientProofProvider(url.trim());
   return {
-    proveTx(
-      tx: UnprovenTransaction,
-      proveTxConfig?: ProveTxConfig<K>,
-    ): Promise<UnbalancedTransaction> {
+    proveTx(tx: UnprovenTransaction, proveTxConfig?: ProveTxConfig<K>): Promise<UnbalancedTransaction> {
       return httpClientProvider.proveTx(tx, proveTxConfig);
     },
   };

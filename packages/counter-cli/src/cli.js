@@ -18,6 +18,7 @@ import { StandaloneConfig, buildWalletAndWaitForFunds, buildFreshWallet, configu
 import { setLogger, CounterAPI } from '@repo/counter-api/common-api';
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import { contractConfig } from '@repo/counter-api';
+import { URL } from 'url';
 let logger;
 /**
  * This seed gives access to tokens minted in the genesis block of a local development node - only

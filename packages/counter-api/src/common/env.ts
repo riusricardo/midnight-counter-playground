@@ -1,38 +1,37 @@
 /**
  * Environment Abstraction Layer
- * 
+ *
  * PROBLEM:
  * The counter-api needs to work in both Node.js and browser environments, but:
  * - Node.js has full file system access (fs module, streams, etc.)
  * - Browsers don't have file system access and need different implementations
  * - Some APIs need platform-specific implementations (storage, networking, etc.)
- * 
+ *
  * SOLUTION:
  * This file provides a unified interface that:
  * 1. **Environment Detection**: Detects Node.js vs browser at runtime
  * 2. **Conditional Imports**: Dynamically imports platform-specific implementations
  * 3. **Fallback Behavior**: Provides safe fallbacks for unsupported operations
  * 4. **Vite Alias Support**: Works with Vite's alias system for browser builds
- * 
+ *
  * CONFIGURATION:
  * - Browser builds: Vite aliases this to env-browser.ts (see apps/web/vite.config.ts)
  * - Node.js builds: Uses this file directly, which imports from env-node.ts
  * - This provides seamless platform abstraction without build-time complexity
- * 
+ *
  * USAGE:
  * Import from this file everywhere in the codebase:
  * ```typescript
  * import { readFile, writeFile, isNodeEnvironment } from './env.js';
  * ```
- * 
+ *
  * The implementation will automatically choose the right platform-specific code.
  */
 
 // Runtime environment detection
 // This checks for Node.js-specific globals to determine the environment
-export const isNodeEnvironment = typeof process !== 'undefined' && 
-  process.versions != null && 
-  process.versions.node != null;
+export const isNodeEnvironment =
+  typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 export const isBrowserEnvironment = !isNodeEnvironment;
 
 // File System API Abstractions
@@ -69,7 +68,10 @@ export const fileExists = async (_path: string): Promise<boolean> => {
 
 // Synchronous file operations need to be available immediately
 // without async imports to work properly in config.ts
-export const readFileSync = (function(): (path: string, encoding: BufferEncoding | { encoding: BufferEncoding } | string) => string {
+export const readFileSync = (function (): (
+  path: string,
+  encoding: BufferEncoding | { encoding: BufferEncoding } | string,
+) => string {
   // For ESM compatibility, we need to handle both module environments
   if (isNodeEnvironment) {
     try {
@@ -88,7 +90,9 @@ export const readFileSync = (function(): (path: string, encoding: BufferEncoding
             }
           } catch (bindingErr) {
             // Last resort: use Node.js built-in module
-            const nodeModule = (globalThis as any).process?.moduleLoadList?.find((m: string) => m.includes('NativeModule fs'));
+            const nodeModule = (globalThis as any).process?.moduleLoadList?.find((m: string) =>
+              m.includes('NativeModule fs'),
+            );
             if (nodeModule) {
               return (globalThis as any).require('fs');
             }
@@ -99,13 +103,17 @@ export const readFileSync = (function(): (path: string, encoding: BufferEncoding
 
       if (!fsModule) {
         console.error('[ERROR] Could not load fs module in any way');
-        return function(): string { return ''; };
+        return function (): string {
+          return '';
+        };
       }
 
-      return function(path: string, encoding: BufferEncoding | { encoding: BufferEncoding } | string = 'utf8'): string {
+      return function (
+        path: string,
+        encoding: BufferEncoding | { encoding: BufferEncoding } | string = 'utf8',
+      ): string {
         try {
-          const encodingOption = typeof encoding === 'string' ? encoding : 
-                               (encoding as any)?.encoding || 'utf8';
+          const encodingOption = typeof encoding === 'string' ? encoding : (encoding as any)?.encoding || 'utf8';
           return fsModule.readFileSync(path, encodingOption);
         } catch (e) {
           console.error('[ERROR] Failed to read file synchronously:', e);
@@ -114,15 +122,19 @@ export const readFileSync = (function(): (path: string, encoding: BufferEncoding
       };
     } catch (e) {
       console.error('[ERROR] Failed to load fs module:', e);
-      return function(): string { return ''; };
+      return function (): string {
+        return '';
+      };
     }
   }
-  
+
   // Browser environment
-  return function(): string { return ''; };
+  return function (): string {
+    return '';
+  };
 })();
 
-export const existsSync = (function(): (path: string) => boolean {
+export const existsSync = (function (): (path: string) => boolean {
   if (isNodeEnvironment) {
     try {
       // Use same approach as readFileSync for module compatibility
@@ -139,7 +151,9 @@ export const existsSync = (function(): (path: string) => boolean {
             }
           } catch (bindingErr) {
             // Last resort: use Node.js built-in module
-            const nodeModule = (globalThis as any).process?.moduleLoadList?.find((m: string) => m.includes('NativeModule fs'));
+            const nodeModule = (globalThis as any).process?.moduleLoadList?.find((m: string) =>
+              m.includes('NativeModule fs'),
+            );
             if (nodeModule) {
               return (globalThis as any).require('fs');
             }
@@ -150,10 +164,12 @@ export const existsSync = (function(): (path: string) => boolean {
 
       if (!fsModule) {
         console.error('[ERROR] Could not load fs module in any way');
-        return function(): boolean { return false; };
+        return function (): boolean {
+          return false;
+        };
       }
 
-      return function(path: string): boolean {
+      return function (path: string): boolean {
         try {
           return fsModule.existsSync(path);
         } catch (e) {
@@ -163,12 +179,16 @@ export const existsSync = (function(): (path: string) => boolean {
       };
     } catch (e) {
       console.error('[ERROR] Failed to load fs module:', e);
-      return function(): boolean { return false; };
+      return function (): boolean {
+        return false;
+      };
     }
   }
-  
+
   // Browser environment
-  return function(): boolean { return false; };
+  return function (): boolean {
+    return false;
+  };
 })();
 
 export const mkdir = async (_path: string, options?: { recursive?: boolean }): Promise<void> => {
@@ -227,42 +247,42 @@ export const createReadStream = (_path: string): ReadStream => {
       if (fsModule) {
         return fsModule.createReadStream(_path, { encoding: 'utf8' });
       }
-      
+
       // Fall back to mock if we couldn't get fs
       const stream: ReadStream = {
-        on: function(event: string, callback: (...args: any[]) => void): ReadStream {
+        on: function (event: string, callback: (...args: any[]) => void): ReadStream {
           if (event === 'error') {
             callback(new Error('Failed to create read stream'));
           }
           return stream;
         },
-        close: function(): void {}
+        close: function (): void {},
       };
       return stream;
     } catch (e) {
       // Return mock stream that signals failure
       const stream: ReadStream = {
-        on: function(event: string, callback: (...args: any[]) => void): ReadStream {
+        on: function (event: string, callback: (...args: any[]) => void): ReadStream {
           if (event === 'error') {
             callback(new Error('Failed to create read stream: ' + (e as Error).message));
           }
           return stream;
         },
-        close: function(): void {}
+        close: function (): void {},
       };
       return stream;
     }
   }
-  
+
   // Mock stream for browser environment
   const stream: ReadStream = {
-    on: function(event: string, callback: (...args: any[]) => void): ReadStream {
+    on: function (event: string, callback: (...args: any[]) => void): ReadStream {
       if (event === 'error') {
         callback(new Error('File system operations are not supported in the browser'));
       }
       return stream;
     },
-    close: function(): void {}
+    close: function (): void {},
   };
   return stream;
 };
@@ -281,45 +301,51 @@ export const createWriteStream = (_path: string): WriteStream => {
       if (fs && typeof fs.createWriteStream === 'function') {
         return fs.createWriteStream(_path);
       }
-      
+
       // Return mock stream if fs module not available
       const stream: WriteStream = {
-        write: function(): boolean { return false; },
-        on: function(event: string, callback: (...args: any[]) => void): WriteStream {
+        write: function (): boolean {
+          return false;
+        },
+        on: function (event: string, callback: (...args: any[]) => void): WriteStream {
           if (event === 'error') {
             callback(new Error('Failed to create write stream - fs module not available'));
           }
           return stream;
         },
-        end: function(): void {}
+        end: function (): void {},
       };
       return stream;
     } catch (e) {
       // Return mock stream that signals failure
       const stream: WriteStream = {
-        write: function(): boolean { return false; },
-        on: function(event: string, callback: (...args: any[]) => void): WriteStream {
+        write: function (): boolean {
+          return false;
+        },
+        on: function (event: string, callback: (...args: any[]) => void): WriteStream {
           if (event === 'error') {
             callback(new Error('Failed to create write stream: ' + String(e)));
           }
           return stream;
         },
-        end: function(): void {}
+        end: function (): void {},
       };
       return stream;
     }
   }
-  
+
   // Mock stream for browser environment
   const stream: WriteStream = {
-    write: function(): boolean { return false; },
-    on: function(event: string, callback: (...args: any[]) => void): WriteStream {
+    write: function (): boolean {
+      return false;
+    },
+    on: function (event: string, callback: (...args: any[]) => void): WriteStream {
       if (event === 'error') {
         callback(new Error('File system operations are not supported in the browser'));
       }
       return stream;
     },
-    end: function(): void {}
+    end: function (): void {},
   };
   return stream;
 };
@@ -330,7 +356,7 @@ export const constants = {
   F_OK: 0, // File exists
   R_OK: 4, // File is readable
   W_OK: 2, // File is writable
-  X_OK: 1  // File is executable
+  X_OK: 1, // File is executable
 };
 
 // Cross-platform path utilities
@@ -344,7 +370,6 @@ export interface PathUtils {
 }
 
 export const pathUtils = (() => {
-  
   // Node.js implementation using the path module
   if (isNodeEnvironment) {
     try {
@@ -374,7 +399,7 @@ export const pathUtils = (() => {
               basename: (filepath: string): string => {
                 const lastSlash = filepath.lastIndexOf('/');
                 return lastSlash === -1 ? filepath : filepath.substring(lastSlash + 1);
-              }
+              },
             };
           } catch (esmErr) {
             console.error('[ERROR] Failed to create path utilities for ESM:', esmErr);
@@ -382,14 +407,17 @@ export const pathUtils = (() => {
           }
         }
       })();
-      
-      if (!pathModule || typeof pathModule.join !== 'function' || 
-          typeof pathModule.resolve !== 'function' || 
-          typeof pathModule.dirname !== 'function' || 
-          typeof pathModule.basename !== 'function') {
+
+      if (
+        !pathModule ||
+        typeof pathModule.join !== 'function' ||
+        typeof pathModule.resolve !== 'function' ||
+        typeof pathModule.dirname !== 'function' ||
+        typeof pathModule.basename !== 'function'
+      ) {
         throw new Error('Invalid path module');
       }
-      
+
       // Create a wrapper that ensures consistent path separators
       const nodePathUtils: PathUtils = {
         join: (...segments: string[]): string => {
@@ -405,9 +433,9 @@ export const pathUtils = (() => {
         },
         basename: (filepath: string): string => {
           return pathModule.basename(filepath);
-        }
+        },
       };
-      
+
       console.log('[DEBUG] Using Node.js path utilities');
       return nodePathUtils;
     } catch (e) {
@@ -415,11 +443,11 @@ export const pathUtils = (() => {
       // Continue to fallback implementation
     }
   }
-  
+
   // Browser-compatible path utilities
   // These are pure JS implementations that work without Node.js
   console.log('[DEBUG] Using browser-compatible path utilities');
-  
+
   const browserPathUtils: PathUtils = {
     join: (...segments: string[]): string => {
       // Filter out empty segments and join with forward slash
@@ -429,23 +457,23 @@ export const pathUtils = (() => {
         .replace(/\/+/g, '/') // Replace multiple slashes with a single one
         .replace(/\/$/, ''); // Remove trailing slash
     },
-    
+
     resolve: (...segments: string[]): string => {
       // Start with empty path
       let resolvedPath = '';
       let isAbsolute = false;
-      
+
       for (const segment of segments) {
         // Skip empty segments
         if (!segment) continue;
-        
+
         // Handle absolute paths (they reset the result)
         if (segment.startsWith('/')) {
           resolvedPath = segment;
           isAbsolute = true;
           continue;
         }
-        
+
         // Handle relative paths
         if (resolvedPath) {
           resolvedPath = `${resolvedPath}/${segment}`;
@@ -453,23 +481,23 @@ export const pathUtils = (() => {
           resolvedPath = segment;
         }
       }
-      
+
       // Clean up the path
       resolvedPath = resolvedPath
         .replace(/\/\.\//g, '/') // Remove /./ sequences
         .replace(/\/+/g, '/'); // Replace multiple slashes
-      
+
       // Ensure absolute paths start with /
       return isAbsolute ? resolvedPath : resolvedPath;
     },
-    
+
     dirname: (filepath: string): string => {
       // Handle empty or root paths
       if (!filepath || filepath === '/') return '/';
-      
+
       // Remove trailing slash if present
       const path = filepath.endsWith('/') ? filepath.slice(0, -1) : filepath;
-      
+
       const lastSlash = path.lastIndexOf('/');
       // No slashes found
       if (lastSlash === -1) return '.';
@@ -477,18 +505,18 @@ export const pathUtils = (() => {
       // Special case for root path
       return lastSlash === 0 ? '/' : path.substring(0, lastSlash);
     },
-    
+
     basename: (filepath: string): string => {
       // Handle empty paths
       if (!filepath) return '';
-      
+
       // Remove trailing slash if present
       const path = filepath.endsWith('/') ? filepath.slice(0, -1) : filepath;
-      
+
       const lastSlash = path.lastIndexOf('/');
       return lastSlash === -1 ? path : path.substring(lastSlash + 1);
-    }
+    },
   };
-  
+
   return browserPathUtils;
 })();

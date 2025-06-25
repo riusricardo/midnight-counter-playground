@@ -132,7 +132,10 @@ export class TestEnvironment {
       const composeFile = process.env.COMPOSE_FILE ?? 'standalone.yml';
       this.logger.info(`Using compose file: ${composeFile}`);
       this.dockerEnv = new DockerComposeEnvironment(path.resolve(currentDir, '..'), composeFile)
-        .withWaitStrategy('counter-proof-server', Wait.forLogMessage('Actix runtime found; starting in Actix runtime', 1))
+        .withWaitStrategy(
+          'counter-proof-server',
+          Wait.forLogMessage('Actix runtime found; starting in Actix runtime', 1),
+        )
         .withWaitStrategy('counter-indexer', Wait.forLogMessage(/starting indexing/, 1));
       this.env = await this.dockerEnv.up();
 
@@ -141,7 +144,11 @@ export class TestEnvironment {
         indexer: TestEnvironment.mapContainerPort(this.env, this.testConfig.dappConfig.indexer, 'counter-indexer'),
         indexerWS: TestEnvironment.mapContainerPort(this.env, this.testConfig.dappConfig.indexerWS, 'counter-indexer'),
         node: TestEnvironment.mapContainerPort(this.env, this.testConfig.dappConfig.node, 'counter-node'),
-        proofServer: TestEnvironment.mapContainerPort(this.env, this.testConfig.dappConfig.proofServer, 'counter-proof-server'),
+        proofServer: TestEnvironment.mapContainerPort(
+          this.env,
+          this.testConfig.dappConfig.proofServer,
+          'counter-proof-server',
+        ),
       };
     }
     this.logger.info(`Configuration:${JSON.stringify(this.testConfig)}`);
@@ -196,7 +203,11 @@ export class TestEnvironment {
       const bal = balances[nativeToken()];
       if (typeof bal === 'bigint') {
         balanceOk = bal > 0n;
-      } else if (typeof bal === 'object' && bal !== null && typeof (bal as { valueOf?: unknown }).valueOf === 'function') {
+      } else if (
+        typeof bal === 'object' &&
+        bal !== null &&
+        typeof (bal as { valueOf?: unknown }).valueOf === 'function'
+      ) {
         // Use valueOf and check type
         const value = (bal as { valueOf: () => unknown }).valueOf();
         if (typeof value === 'bigint' || typeof value === 'number') {

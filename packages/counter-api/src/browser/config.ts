@@ -1,10 +1,10 @@
 /**
  * Browser Configuration Provider
- * 
+ *
  * PURPOSE:
  * This file provides browser-compatible configuration management that integrates
  * with the unified configuration system used by the CLI and other components.
- * 
+ *
  * FEATURES:
  * - Environment-based configuration selection
  * - Type-safe configuration with the same interface as Node.js configs
@@ -12,11 +12,11 @@
  */
 
 import { NetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import { 
-  createBrowserConfig, 
-  getDefaultBrowserConfig, 
-  type BrowserConfig, 
-  type ConfigEnvironment 
+import {
+  createBrowserConfig,
+  getDefaultBrowserConfig,
+  type BrowserConfig,
+  type ConfigEnvironment,
 } from '../common/config.js';
 
 export interface RuntimeConfiguration {
@@ -48,11 +48,11 @@ export const loadBrowserConfiguration = (environment?: ConfigEnvironment): Runti
   try {
     const configEnv = environment || 'testnet-remote';
     const config = createBrowserConfig(configEnv);
-    
+
     console.log(`🌙 Midnight App: Using ${configEnv} configuration`);
     console.log(`🔗 Indexer: ${config.indexer}`);
     console.log(`🌐 Network: ${NetworkId[config.networkId]}`);
-    
+
     return browserConfigToRuntimeConfig(config);
   } catch (error) {
     console.warn('Failed to load browser configuration, using defaults:', error);

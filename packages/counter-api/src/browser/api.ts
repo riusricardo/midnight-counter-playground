@@ -2,7 +2,12 @@
 // This file contains browser-specific provider setup for the Counter App
 
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
-import { PublicDataProvider, WalletProvider, MidnightProvider, PrivateStateProvider } from '@midnight-ntwrk/midnight-js-types';
+import {
+  PublicDataProvider,
+  WalletProvider,
+  MidnightProvider,
+  PrivateStateProvider,
+} from '@midnight-ntwrk/midnight-js-types';
 import { proofClient, noopProofClient } from './proof-client';
 import { CachedFetchZkConfigProvider } from './zk-config-provider';
 import { CounterPrivateState } from '@midnight-ntwrk/counter-contract';
@@ -20,9 +25,10 @@ export const createCounterProviders = (
   walletAPI: WalletAPI,
   callback: (action: ProviderCallbackAction) => void,
 ): CounterProviders => {
-  const privateStateProvider: PrivateStateProvider<'counterPrivateState', CounterPrivateState> = levelPrivateStateProvider({
-    privateStateStoreName: contractConfig.privateStateStoreName,
-  });
+  const privateStateProvider: PrivateStateProvider<'counterPrivateState', CounterPrivateState> =
+    levelPrivateStateProvider({
+      privateStateStoreName: contractConfig.privateStateStoreName,
+    });
   const proofProvider = proofClient(walletAPI.uris.proverServerUri);
   return {
     privateStateProvider,

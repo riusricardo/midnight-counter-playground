@@ -12,12 +12,14 @@ This document provides an overview of all the documentation files and commented 
 ### 📄 Source Code with Documentation
 
 #### Environment Abstraction Layer
+
 - **[src/env.ts](./src/env.ts)** - Main abstraction layer with runtime detection
 - **[src/env-node.ts](./src/env-node.ts)** - Node.js-specific implementations
 - **[src/env-browser.ts](./src/env-browser.ts)** - Browser-compatible stubs and fallbacks
 - **[src/path-resolver.ts](./src/path-resolver.ts)** - Universal path resolution for CJS/ESM
 
 #### Configuration Files
+
 - **[apps/web/vite.config.ts](../../apps/web/vite.config.ts)** - Vite configuration with aliases and comments
 
 ## Key Concepts Documented
@@ -27,6 +29,7 @@ This document provides an overview of all the documentation files and commented 
 **Problem**: The counter-api needs to work in both Node.js and browser environments with different capabilities.
 
 **Solutions Documented**:
+
 - Environment abstraction layer (`env.ts`, `env-node.ts`, `env-browser.ts`)
 - Universal path resolution (`path-resolver.ts`)
 - Vite alias configuration for browser builds
@@ -34,6 +37,7 @@ This document provides an overview of all the documentation files and commented 
 ### 🔧 Build System Integration
 
 **Configuration Points**:
+
 - **Vite Aliases**: Route browser imports to browser-compatible implementations
 - **TypeScript**: Maintain type safety across environments
 - **Module Systems**: Handle both CommonJS and ESM contexts
@@ -41,6 +45,7 @@ This document provides an overview of all the documentation files and commented 
 ### 📋 Documentation Standards
 
 Each documented file includes:
+
 - **Purpose**: What problem it solves
 - **Usage**: How to use it correctly
 - **Configuration**: Where it's configured
@@ -49,11 +54,11 @@ Each documented file includes:
 
 ## Quick Reference
 
-| Need | File | Key Function |
-|------|------|-------------|
-| File operations | `env.ts` | `readFile()`, `writeFile()` |
-| Path detection | `path-resolver.ts` | `getDirPath()` |
-| Browser config | `vite.config.ts` | Aliases section |
+| Need            | File               | Key Function                |
+| --------------- | ------------------ | --------------------------- |
+| File operations | `env.ts`           | `readFile()`, `writeFile()` |
+| Path detection  | `path-resolver.ts` | `getDirPath()`              |
+| Browser config  | `vite.config.ts`   | Aliases section             |
 
 ## For New Developers
 

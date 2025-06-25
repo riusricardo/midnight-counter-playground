@@ -48,34 +48,34 @@ function findWorkspaceRoot(startDir: string): string {
   // We'll search upwards from multiple starting points to be robust
   // This covers cases where the package is installed in node_modules or linked in a workspace
   const searchDirs = [
-    startDir, 
+    startDir,
     process.cwd(),
     // Add additional common starting points if necessary
     pathUtils.resolve(process.cwd(), '..'),
-    pathUtils.resolve(startDir, '..')
+    pathUtils.resolve(startDir, '..'),
   ];
   const visited = new Set<string>();
 
   // Common workspace root indicator files
   const rootMarkers = [
     // Monorepo tools
-    'turbo.json',              // Turborepo
-    'nx.json',                 // Nx
-    'lerna.json',              // Lerna
-    'pnpm-workspace.yaml',     // PNPM workspace
-    'rush.json',               // Rush
+    'turbo.json', // Turborepo
+    'nx.json', // Nx
+    'lerna.json', // Lerna
+    'pnpm-workspace.yaml', // PNPM workspace
+    'rush.json', // Rush
     // Version control
-    '.git',                    // Git repository
+    '.git', // Git repository
     // Config files often at root
-    '.eslintrc.js',            // ESLint
+    '.eslintrc.js', // ESLint
     '.eslintrc.json',
-    'tsconfig.base.json',      // TypeScript project references
-    'jest.config.js',          // Jest
-    'babel.config.js',         // Babel
+    'tsconfig.base.json', // TypeScript project references
+    'jest.config.js', // Jest
+    'babel.config.js', // Babel
     // Package managers
-    'yarn.lock',               // Yarn
-    'package-lock.json',       // NPM
-    'pnpm-lock.yaml'           // PNPM
+    'yarn.lock', // Yarn
+    'package-lock.json', // NPM
+    'pnpm-lock.yaml', // PNPM
   ];
 
   for (const dir of searchDirs) {
@@ -84,7 +84,7 @@ function findWorkspaceRoot(startDir: string): string {
     // Walk upwards through directory hierarchy
     while (currentDir && !visited.has(currentDir)) {
       visited.add(currentDir);
-      
+
       // Check for workspace root markers
       for (const marker of rootMarkers) {
         const markerPath = pathUtils.join(currentDir, marker);
@@ -112,7 +112,7 @@ function findWorkspaceRoot(startDir: string): string {
           console.warn(`[WARN] Could not parse package.json at ${packageJsonPath}: ${e}`);
         }
       }
-      
+
       // Check for monorepo structure patterns
       const packagesDir = pathUtils.join(currentDir, 'packages');
       const appsDir = pathUtils.join(currentDir, 'apps');
