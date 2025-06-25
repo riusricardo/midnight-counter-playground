@@ -47,8 +47,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "rm -rf dist && tsc && cp ../counter-cli/standalone.yml dist/",
-    "test-api": "docker compose -f ../counter-cli/standalone.yml pull && DEBUG='testcontainers' vitest run",
+    "build": "rm -rf dist && tsc && cp ../../cli/counter/standalone.yml dist/",
+    "test-api": "docker compose -f ../../cli/counter/standalone.yml pull && DEBUG='testcontainers' vitest run",
     "test-against-testnet": "RUN_ENV_TESTS=true TEST_ENV=testnet TEST_WALLET_SEED=692f140c1e8d527c7c7fca5beb9bbfe412a4f0a1ccca2e15f672352c579b68fb vitest run"
   },
   "dependencies": {

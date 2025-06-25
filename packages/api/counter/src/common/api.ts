@@ -22,7 +22,7 @@ import {
   type CounterPrivateState,
   createCounterPrivateState,
   witnesses,
-} from '@midnight-ntwrk/counter-contract';
+} from '../../../../contracts/counter/dist/index.js';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { type FinalizedTxData } from '@midnight-ntwrk/midnight-js-types';
 
@@ -349,7 +349,7 @@ export class CounterAPI implements DeployedCounterAPI {
 }
 
 // Exports for compatibility
-export { Counter, witnesses } from '@midnight-ntwrk/counter-contract';
+export { Counter, witnesses } from '../../../../contracts/counter/dist/index.js';
 export type { CounterContract, CounterProviders, DeployedCounterContract } from './types.js';
 export { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 

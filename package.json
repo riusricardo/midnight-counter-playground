@@ -3,15 +3,18 @@
   "private": true,
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "packages/api/*",
+    "packages/cli/*",
+    "packages/contracts/*"
   ],
   "scripts": {
     "compact": "turbo run compact",
     "build": "turbo run build",
     "start": "turbo run start --filter=@repo/web-app",
-    "counter-cli-remote": "yarn --cwd packages/counter-cli run start-testnet-remote",
-    "counter-cli-remote-ps": "yarn --cwd packages/counter-cli run start-testnet-remote-ps",
-    "test-against-testnet": "yarn --cwd packages/counter-cli run test-against-testnet",
+    "counter-cli-remote": "yarn --cwd packages/cli/counter run start-testnet-remote",
+    "counter-cli-remote-ps": "yarn --cwd packages/cli/counter run start-testnet-remote-ps",
+    "test-against-testnet": "yarn --cwd packages/cli/counter run test-against-testnet",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "lint": "turbo run lint",
     "test-api": "turbo run test-api --filter=@repo/counter-api",

@@ -75,7 +75,7 @@ export default defineConfig({
       // instead of Node.js-specific code. The env-browser.ts file provides safe fallbacks
       // for file system operations and other Node.js APIs.
       //
-      // See: packages/counter-api/src/browser/env-browser.ts for implementation details
+      // See: packages/api/counter/src/browser/env-browser.ts for implementation details
       '@repo/counter-api/src/env': '@repo/counter-api/dist/browser/env-browser',
       '@repo/counter-api/dist/env': '@repo/counter-api/dist/browser/env-browser',
       '@repo/counter-api/dist/env-node': '@repo/counter-api/dist/browser/env-browser',

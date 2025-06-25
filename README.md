@@ -10,11 +10,11 @@ This application interacts with a simple counter smart contract deployed on the 
 
 - **UI** (`apps/web`):
   - A web application that allows users to interact with the counter smart contract on the Midnight blockchain. Users can view and increment the counter value through an interface. The UI also integrates with the Midnight Lace wallet, enabling secure signing and management of blockchain transactions directly from the browser.
-- **CLI** (`packages/counter-cli`):
+- **CLI** (`packages/cli/counter`):
   - A command-line tool for developers and advanced users. It provides direct access to contract functions, testing utilities, and blockchain operations. The CLI is ideal for scripting, automation, and debugging contract interactions without a graphical interface.
-- **Counter API** (`packages/counter-api`):
+- **Counter API** (`packages/api/counter`):
   - The core backend logic and utility layer for the project. It exposes functions for interacting with the counter contract, handles business logic, and provides reusable modules for both the UI and CLI. This package ensures consistency and code reuse across the monorepo.
-- **Counter Contract** (`packages/counter-contract`):
+- **Counter Contract** (`packages/contracts/counter`):
   - Contains the smart contract source code written for the Midnight blockchain. This package also includes unit tests and simulation scripts to verify contract behavior and correctness before deployment.
 - **Other Packages**:
   - Shared utilities, configuration files, and libraries that support the main applications. These may include linting rules, TypeScript configurations, and reusable UI or backend components to streamline development across the monorepo.
@@ -53,10 +53,10 @@ yarn counter-cli-remote-ps
 
 ## The Counter Contract
 
-The [counter-contract](packages/counter-contract) subdirectory contains:
+The [counter-contract](packages/contracts/counter) subdirectory contains:
 
-- the [smart contract](packages/counter-contract/src/counter.compact)
-- some [unit tests](packages/counter-contract/src/test/counter.test.ts) to test the smart contract
+- the [smart contract](packages/contracts/counter/src/counter.compact)
+- some [unit tests](packages/contracts/counter/src/test/counter.test.ts) to test the smart contract
 
 ### The Source Code
 
@@ -75,10 +75,10 @@ export circuit increment(): [] {
 ```
 
 To verify that the smart contract operates as expected,
-we've provided some unit tests in `packages/counter-contract/src/test/counter.test.ts`.
+we've provided some unit tests in `packages/contracts/counter/src/test/counter.test.ts`.
 
 We've also provided tests that use a simple simulator, which illustrates
-how to initialize and call the smart contract code locally without running a node in `packages/counter-contract/src/test/counter-simulator.ts`
+how to initialize and call the smart contract code locally without running a node in `packages/contracts/counter/src/test/counter-simulator.ts`
 
 ### Building the Smart Contract
 
@@ -92,12 +92,12 @@ You should see the following output from npm and the Compact compiler:
 
 ```bash
 > compact
-> compactc --skip-zk packages/counter-contract/src/counter.compact packages/counter-contract/src/managed/counter
+> compactc --skip-zk packages/contracts/counter/src/counter.compact packages/contracts/counter/src/managed/counter
 
 Compactc version: 0.24.0
 ```
 
-The compiler will complete very quickly because we've instructed it to skip ZK key generation with the option `--skip-zk`. The compiler's output files will be placed in the directory `packages/counter-contract/src/managed/counter`.
+The compiler will complete very quickly because we've instructed it to skip ZK key generation with the option `--skip-zk`. The compiler's output files will be placed in the directory `packages/contracts/counter/src/managed/counter`.
 
 **Run contract's tests:**
 
