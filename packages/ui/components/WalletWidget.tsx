@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Address } from '@midnight-ntwrk/wallet-api';
-import { Alert, Box, Button, CircularProgress, Typography } from '@mui/material';
+import { Alert, Button, CircularProgress, Typography } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { type Logger } from 'pino';
@@ -29,17 +29,19 @@ export const WalletWidget = (
 ): React.ReactNode => {
   const box = (content: React.ReactNode): React.ReactNode => {
     return (
-      <Box
-        paddingBottom={'20px'}
-        display="flex"
-        alignItems="right"
-        justifyContent="right"
-        flexDirection="column"
-        borderRadius={2}
-        borderColor="grey.300"
+      <div
+        style={{
+          paddingBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          borderRadius: '8px',
+          borderColor: '#ccc',
+        }}
       >
         {content}
-      </Box>
+      </div>
     );
   };
 
@@ -87,16 +89,11 @@ export const WalletWidget = (
 
   const icon = isConnecting ? <CircularProgress size={10} /> : error ? <ErrorIcon /> : <CheckBoxIcon />;
 
-  let showFloatingBox = !proofServerIsOnline || !address;
-  if (!isFloatingOpen || isConnecting) {
-    showFloatingBox = false;
-  }
-
   return box(
     <div>
       <Typography align="right" variant="body2" color="cornsilk">
-        <Box
-          sx={{
+        <div
+          style={{
             position: 'relative',
             display: 'inline-block',
           }}
@@ -106,25 +103,7 @@ export const WalletWidget = (
               ? 'Connected: ' + address.substring(0, 6) + '...' + address.substring(22, 26) + '...' + address.substring(124, 132)
               : 'Connect Wallet'}
           </Button>
-          {showFloatingBox && (
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '30px',
-                right: 0,
-                mt: 1,
-                backgroundColor: 'secondary.main',
-                color: 'cornsilk',
-                border: '1px solid cornsilk',
-                borderRadius: '6px',
-                textAlign: 'left',
-                p: 1,
-                minWidth: 350,
-                zIndex: 2000,
-              }}
-            ></Box>
-          )}
-        </Box>
+        </div>
       </Typography>
     </div>,
   );

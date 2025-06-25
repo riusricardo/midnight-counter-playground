@@ -8,8 +8,8 @@ import { RuntimeConfigurationProvider, useRuntimeConfiguration } from '../config
 import { MidnightWalletProvider, useMidnightWallet } from './MidnightWallet.js';
 import * as pino from 'pino';
 import { type NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import { CounterApplication } from './CounterComponent.js';
-import { CounterReaderApplication } from './CounterReaderComponent.js';
+import { CounterApplication } from './CounterDeploy.js';
+import { CounterReaderApplication } from './CounterReader.js';
 import { type Logger } from 'pino';
 import { createCounterProviders } from '@repo/counter-api/browser-api';
 import type { CounterProviders } from '@repo/counter-api';

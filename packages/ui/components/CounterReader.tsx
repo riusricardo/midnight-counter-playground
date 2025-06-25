@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
 import { CounterAPI, type CounterState, type CounterProviders } from '@repo/counter-api';
+import { CircularProgress } from '@mui/material';
 
 interface CounterReaderProviderProps {
   contractAddress: ContractAddress;
@@ -17,6 +18,7 @@ interface CounterReaderContextType {
   contractExists: boolean;
   refreshValue: () => Promise<void>;
   hasRealtimeUpdates: boolean;
+  incrementCounter: () => Promise<void>;
 }
 
 const CounterReaderContext = React.createContext<CounterReaderContextType>({
@@ -27,6 +29,7 @@ const CounterReaderContext = React.createContext<CounterReaderContextType>({
   contractExists: false,
   refreshValue: async () => {},
   hasRealtimeUpdates: false,
+  incrementCounter: async () => {},
 });
 
 export const useCounterReader = () => {
@@ -72,7 +75,7 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
     }
 
     try {
-      console.log('🔍 CounterComponent: Checking providers...');
+      console.log('🔍 CounterReader: Checking providers...');
       console.log('providers object:', providers);
       console.log('providers type:', typeof providers);
       setIsLoading(true);
@@ -114,7 +117,6 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
         };
       } catch (subscriptionError) {
         // Use console for debugging - logging fallback to direct read
-        // eslint-disable-next-line
         console.warn('Failed to subscribe to contract, trying direct read approach:', subscriptionError);
 
         // Fallback: Try to read the counter value directly from the public state
@@ -168,6 +170,56 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
     }
   };
 
+  const incrementCounter = async () => {
+    if (!counterApi) {
+      setError(new Error('Counter API not initialized'));
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      console.log('🔍 CounterReader: Starting increment operation...');
+      console.log('🔍 CounterReader: Contract address:', contractAddress);
+      console.log('🔍 CounterReader: Current counter value:', counterValue);
+      console.log('🔍 CounterReader: Providers available:', !!providers);
+
+      // Check if providers are still valid
+      if (!providers || !providers.privateStateProvider || !providers.publicDataProvider) {
+        throw new Error('Providers not properly initialized');
+      }
+
+      console.log('✅ CounterReader: Providers validation passed');
+
+      await counterApi.increment();
+      console.log('✅ CounterReader: Increment operation completed successfully');
+
+      // The state$ observable will update the UI
+    } catch (err) {
+      console.error('❌ CounterReader: Increment operation failed:', err);
+
+      // Provide more specific error messages based on the error type
+      let errorMessage = 'Failed to increment counter';
+      if (err instanceof Error) {
+        if (err.message.includes('invalid string length')) {
+          errorMessage =
+            'Transaction failed due to validation error. This may be due to incomplete provider setup or network issues.';
+        } else if (err.message.includes('verifier key')) {
+          errorMessage = 'Contract verification failed. The contract version may be incompatible with the current network.';
+        } else if (err.message.includes('proof')) {
+          errorMessage = 'Proof generation failed. Please check your connection to the proof server.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(new Error(errorMessage));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <CounterReaderContext.Provider
       value={{
@@ -178,6 +230,7 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
         contractExists,
         refreshValue,
         hasRealtimeUpdates,
+        incrementCounter,
       }}
     >
       {children}
@@ -186,12 +239,15 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({ co
 };
 
 export const CounterReaderDisplay: React.FC = () => {
-  const { counterValue, isLoading, error, contractExists, refreshValue } = useCounterReader();
+  const { counterValue, isLoading, error, contractExists, refreshValue, incrementCounter } = useCounterReader();
 
   if (isLoading) {
     return (
       <div className="counter-reader-container">
-        <div className="loading-indicator">Loading counter value...</div>
+        <div className="loading-indicator" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <CircularProgress size={18} />
+          Loading counter value...
+        </div>
       </div>
     );
   }
@@ -305,32 +361,56 @@ export const CounterReaderDisplay: React.FC = () => {
         </div>
       </div>
 
-      <button
-        className="refresh-button"
-        onClick={() => {
-          void refreshValue();
-        }}
-        disabled={isLoading}
-        style={{
-          width: '100%',
-          padding: '12px',
-          fontSize: '16px',
-          backgroundColor: isLoading ? '#cccccc' : '#2e7d32',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: isLoading ? 'not-allowed' : 'pointer',
-          transition: 'background-color 0.2s',
-        }}
-      >
-        {isLoading ? 'Refreshing...' : 'Refresh Value'}
-      </button>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button
+          className="increment-button"
+          onClick={() => {
+            void incrementCounter();
+          }}
+          disabled={isLoading}
+          style={{
+            flex: 1,
+            padding: '12px',
+            fontSize: '16px',
+            backgroundColor: isLoading ? '#cccccc' : '#2e7d32',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            transition: 'background-color 0.2s',
+          }}
+        >
+          {isLoading ? 'Incrementing...' : 'Increment Counter'}
+        </button>
+
+        <button
+          className="refresh-button"
+          onClick={() => {
+            void refreshValue();
+          }}
+          disabled={isLoading}
+          style={{
+            flex: 1,
+            padding: '12px',
+            fontSize: '16px',
+            backgroundColor: isLoading ? '#cccccc' : '#1976d2',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            transition: 'background-color 0.2s',
+          }}
+        >
+          {isLoading ? 'Refreshing...' : 'Refresh Value'}
+        </button>
+      </div>
     </div>
   );
 };
 
 export const CounterAddressInput: React.FC<{
-  onAddressSubmit: (address: ContractAddress) => void;
+  // eslint-disable-next-line no-unused-vars
+  onAddressSubmit: (_address: ContractAddress) => void;
   initialAddress?: string;
 }> = ({ onAddressSubmit, initialAddress = '' }) => {
   const [addressInput, setAddressInput] = useState<string>(initialAddress);
@@ -346,14 +426,16 @@ export const CounterAddressInput: React.FC<{
     }
 
     try {
-      // Basic validation - contract addresses should be hex strings
-      if (!/^[a-fA-F0-9]+$/.test(addressInput.trim())) {
+      // Remove spaces and validate - contract addresses should be hex strings
+      const cleanAddress = addressInput.trim().replace(/\s+/g, '');
+      if (!/^[a-fA-F0-9]+$/.test(cleanAddress)) {
         setError('Invalid contract address format. Address should be a hexadecimal string.');
         return;
       }
 
-      onAddressSubmit(addressInput.trim() as ContractAddress);
-    } catch {
+      onAddressSubmit(cleanAddress as ContractAddress);
+    } catch (err) {
+      console.error('Invalid contract address:', err);
       setError('Invalid contract address');
     }
   };

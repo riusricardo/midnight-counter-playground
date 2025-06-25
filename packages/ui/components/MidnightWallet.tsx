@@ -55,6 +55,7 @@ interface MidnightWalletState {
 export interface WalletAPI {
   wallet: DAppConnectorWalletAPI;
   coinPublicKey: CoinPublicKey;
+  encryptionPublicKey: string;
   uris: ServiceUriConfig;
 }
 
@@ -165,7 +166,7 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
     if (walletAPI) {
       return {
         coinPublicKey: walletAPI.coinPublicKey,
-        encryptionPublicKey: '', // fallback for required property
+        encryptionPublicKey: walletAPI.encryptionPublicKey,
         balanceTx(tx: UnbalancedTransaction, newCoins: CoinInfo[]): Promise<BalancedTransaction> {
           providerCallback('balanceTxStarted');
           return walletAPI.wallet
@@ -272,9 +273,11 @@ export const MidnightWalletProvider: React.FC<MidnightWalletProviderProps> = ({ 
       const reqState = await walletResult.wallet.state();
       setAddress(reqState.address);
       console.log('Connected wallet address:', reqState.address);
+      console.log('Wallet encryption public key:', (reqState as any).encryptionPublicKey);
       setWalletAPI({
         wallet: walletResult.wallet,
         coinPublicKey: reqState.coinPublicKey,
+        encryptionPublicKey: (reqState as any).encryptionPublicKey || '',
         uris: walletResult.uris,
       });
     } catch (e) {
