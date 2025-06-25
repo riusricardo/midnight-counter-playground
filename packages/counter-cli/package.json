@@ -18,8 +18,6 @@
     "start-testnet-remote": "yarn build && yarn testnet-remote",
     "start-testnet-remote-ps": "yarn build && yarn testnet-remote-ps",
     "standalone": "docker compose -f standalone.yml pull && node --experimental-specifier-resolution=node --loader ts-node/esm src/standalone.ts",
-    "test-api": "docker compose -f standalone.yml pull && DEBUG='testcontainers' vitest run",
-    "test-against-testnet": "RUN_ENV_TESTS=true TEST_ENV=testnet TEST_WALLET_SEED=692f140c1e8d527c7c7fca5beb9bbfe412a4f0a1ccca2e15f672352c579b68fb vitest run",
     "testnet-local": "node --experimental-specifier-resolution=node --loader ts-node/esm src/testnet-local.ts",
     "testnet-remote": "node --experimental-specifier-resolution=node --loader ts-node/esm src/testnet-remote.ts",
     "testnet-remote-ps": "cp -r proof-server-testnet.yml ./dist/ && node --experimental-specifier-resolution=node --loader ts-node/esm src/testnet-remote-start-proof-server.ts",

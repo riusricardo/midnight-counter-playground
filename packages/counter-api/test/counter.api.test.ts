@@ -18,11 +18,10 @@ import { type Wallet } from '@midnight-ntwrk/wallet-api';
 import path from 'path';
 import { configureProviders, CounterProviders } from '@repo/counter-api/node-api';
 import { setLogger, CounterAPI, currentDir } from '@repo/counter-api';
-import { createLogger } from '../logger-utils';
 import { TestEnvironment } from './commons';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
-import { contractConfig } from '@repo/counter-api';
+import { contractConfig, createLogger} from '@repo/counter-api';
 
 const logDir = path.resolve(currentDir, '..', 'logs', 'tests', `${new Date().toISOString()}.log`);
 const logger = await createLogger(logDir);

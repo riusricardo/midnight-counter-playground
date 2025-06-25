@@ -13,9 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createLogger } from './logger-utils.js';
 import { run } from './cli.js';
-import { currentDir, TestnetRemoteConfig } from '@repo/counter-api';
+import { currentDir, TestnetRemoteConfig, createLogger } from '@repo/counter-api';
 import { DockerComposeEnvironment, Wait } from 'testcontainers';
 import path from 'node:path';
 

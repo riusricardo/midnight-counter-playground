@@ -1,5 +1,5 @@
 {
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "../counter-api/src/node/logger-utils.ts"],
   "compilerOptions": {
     // "rootDir": "src",
     "outDir": "dist",

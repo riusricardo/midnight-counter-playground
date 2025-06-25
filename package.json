@@ -15,7 +15,8 @@
     "counter-cli-remote-ps": "yarn --cwd packages/counter-cli run start-testnet-remote-ps",
     "test-against-testnet": "yarn --cwd packages/counter-cli run test-against-testnet",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "test-api": "turbo run test-api --filter=@repo/counter-api"
   },
   "dependencies": {
     "@eslint/js": "^9.28.0",

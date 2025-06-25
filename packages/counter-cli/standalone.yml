@@ -24,9 +24,9 @@ services:
     image: 'midnightnetwork/midnight-node:0.12.0'
     container_name: 'counter-node'
     ports:
-      - "9944"
+      - "9955:9944"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9944/health" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:9955/health" ]
       interval: 2s
       timeout: 5s
       retries: 5

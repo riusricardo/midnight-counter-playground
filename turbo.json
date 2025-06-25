@@ -33,8 +33,9 @@
     "check": {
       "dependsOn": ["build", "lint", "test"]
     },
-    "test-e2e": {
-      "dependsOn": ["build", "compact"]
+    "test-api": {
+      "cache": false,
+      "persistent": true
     },
     "start": {
       "cache": false,

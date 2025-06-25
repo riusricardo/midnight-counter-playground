@@ -107,15 +107,6 @@ function findWorkspaceRoot(startDir: string): string {
             (globalThis as any).__workspaceRootCache = currentDir;
             return currentDir;
           }
-          
-          // Check if this is a top-level package
-          // Often the root package's name is different from child packages
-          if (packageJson.name && packageJson.private === true) {
-            console.log(`[DEBUG] Found private root package at: ${currentDir}`);
-            // Cache the result for future calls
-            (globalThis as any).__workspaceRootCache = currentDir;
-            return currentDir;
-          }
         } catch (e) {
           // Ignore JSON parsing errors, continue searching
           console.warn(`[WARN] Could not parse package.json at ${packageJsonPath}: ${e}`);
