@@ -17,10 +17,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "lint": "turbo run lint"
   },
-  "resolutions": {
-    "@midnight-ntwrk/compact-runtime/@midnight-ntwrk/onchain-runtime": "^0.3.0",
-    "@midnight-ntwrk/zswap": "^4.0.0"
-  },
   "dependencies": {
     "@eslint/js": "^9.28.0",
     "@midnight-ntwrk/compact-runtime": "^0.8.1",

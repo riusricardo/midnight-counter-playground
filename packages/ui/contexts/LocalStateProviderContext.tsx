@@ -8,10 +8,6 @@ export type LocalStateProviderProps = PropsWithChildren<{
   logger: Logger;
 }>;
 
-export const LocalStateProvider: React.FC<Readonly<LocalStateProviderProps>> = ({ children, logger }) => {
-  return (
-    <LocalStateProviderContext.Provider value={new BrowserLocalState(logger)}>
-      {children}
-    </LocalStateProviderContext.Provider>
-  );
-};
+export const LocalStateProvider: React.FC<Readonly<LocalStateProviderProps>> = ({ children }) => (
+  <LocalStateProviderContext.Provider value={new BrowserLocalState()}>{children}</LocalStateProviderContext.Provider>
+);

@@ -21,8 +21,6 @@ interface RuntimeConfigurationProviderProps {
 
 /**
  * Loads runtime configuration using the unified configuration system.
- * This replaces the static config.json approach with the same configuration
- * system used by the CLI and API components.
  */
 export const loadRuntimeConfiguration = (): RuntimeConfiguration => {
   // Use default testnet-remote configuration for now

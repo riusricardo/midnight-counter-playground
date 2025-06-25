@@ -153,7 +153,7 @@ export const contractConfig = {
   privateStateStoreName: 'counter-private-state',
   zkConfigPath: isNodeEnvironment
     ? pathUtils.resolve(workspaceRoot, 'packages', 'counter-contract', 'src', 'managed', 'counter')
-    : '/packages/counter-contract/src/managed/counter', // Browser fallback - relative path
+    : '/dist', // Browser fallback - relative path
 };
 
 export interface Config {

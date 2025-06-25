@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Address } from '@midnight-ntwrk/wallet-api';
-import { Alert, Box, Button, CircularProgress, Dialog, keyframes, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Typography } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { type Logger } from 'pino';
@@ -83,28 +83,9 @@ export const WalletWidget = (
     if (!error && !address) {
       await connect();
     }
-    // Removed the dialog opening logic - no more unwanted information windows
   };
 
   const icon = isConnecting ? <CircularProgress size={10} /> : error ? <ErrorIcon /> : <CheckBoxIcon />;
-
-  const shakeAnimation = keyframes`
-    0% {
-      transform: rotate(0deg);
-    }
-    25% {
-      transform: rotate(-5deg);
-    }
-    50% {
-      transform: rotate(5deg);
-    }
-    75% {
-      transform: rotate(-5deg);
-    }
-    100% {
-      transform: rotate(0deg);
-    }
-  `;
 
   let showFloatingBox = !proofServerIsOnline || !address;
   if (!isFloatingOpen || isConnecting) {
@@ -120,16 +101,10 @@ export const WalletWidget = (
             display: 'inline-block',
           }}
         >
-          <Button
-            sx={{
-              animation: shake ? `${shakeAnimation} 0.5s` : 'none',
-            }}
-            startIcon={icon}
-            onClick={connectOrShowWallet}
-            size="small"
-            variant={'outlined'}
-          >
-            {address ? 'Connected: ' + address.substring(0, 16) + '...' : 'Connect Wallet'}
+          <Button startIcon={icon} onClick={connectOrShowWallet} size="small" variant={'outlined'}>
+            {address
+              ? 'Connected: ' + address.substring(0, 6) + '...' + address.substring(22, 26) + '...' + address.substring(124, 132)
+              : 'Connect Wallet'}
           </Button>
           {showFloatingBox && (
             <Box
@@ -147,28 +122,10 @@ export const WalletWidget = (
                 minWidth: 350,
                 zIndex: 2000,
               }}
-            >
-              {/* Removed non-functional close button */}
-            </Box>
+            ></Box>
           )}
         </Box>
       </Typography>
-
-      <Dialog
-        open={false} // Disabled the dialog - no more unwanted information windows
-        onClose={() => {}}
-        aria-labelledby="wallet-dialog-title"
-        aria-describedby="wallet-dialog-description"
-        PaperProps={{
-          style: {
-            backgroundColor: 'black',
-            borderRadius: '8px',
-            padding: '16px',
-          },
-        }}
-      >
-        {/* Dialog content removed since dialog is disabled */}
-      </Dialog>
     </div>,
   );
 };

@@ -1,20 +1,21 @@
-import type { Logger } from 'pino';
-
 export interface LocalState {
-  readonly setLaceAutoConnect: (value: boolean) => void;
+  // eslint-disable-next-line no-unused-vars
+  readonly setLaceAutoConnect: (_value: boolean) => void;
   readonly isLaceAutoConnect: () => boolean;
 }
 
+// Use globalThis for universal compatibility (browser/node)
 export class BrowserLocalState implements LocalState {
-  constructor(private readonly logger: Logger) {
-  }
-
   isLaceAutoConnect(): boolean {
-    return window.localStorage.getItem('counter_midnight_lace_connect') === 'true';
+    if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+      return globalThis.localStorage.getItem('counter_midnight_lace_connect') === 'true';
+    }
+    return false;
   }
 
-  setLaceAutoConnect(value: boolean): void {
-    this.logger.trace(`Setting lace auto connect to ${value}`);
-    window.localStorage.setItem('counter_midnight_lace_connect', value.toString());
+  setLaceAutoConnect(_value: boolean): void {
+    if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+      globalThis.localStorage.setItem('counter_midnight_lace_connect', _value.toString());
+    }
   }
 }

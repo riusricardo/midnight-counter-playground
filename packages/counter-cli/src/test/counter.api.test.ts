@@ -62,7 +62,7 @@ describe('API', () => {
     expect(counter.counterValue).toEqual(BigInt(0));
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    
+
     // Increment using new unified API - use incrementWithTxInfo for transaction response
     const response = await CounterAPI.incrementWithTxInfo(counterApi);
     expect(response.txHash || response.txId).toMatch(/[0-9a-f]{64}/);

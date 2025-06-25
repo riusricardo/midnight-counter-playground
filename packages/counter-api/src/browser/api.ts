@@ -7,6 +7,7 @@ import { proofClient, noopProofClient } from './proof-client';
 import { CachedFetchZkConfigProvider } from './zk-config-provider';
 import { CounterPrivateState } from '@midnight-ntwrk/counter-contract';
 import { ImpureCounterCircuits, CounterProviders } from '../common/types';
+import { contractConfig } from '../common/config';
 import { WalletAPI, ProviderCallbackAction } from './types';
 
 export { proofClient, noopProofClient } from './proof-client';
@@ -20,7 +21,7 @@ export const createCounterProviders = (
   callback: (action: ProviderCallbackAction) => void,
 ): CounterProviders => {
   const privateStateProvider: PrivateStateProvider<'counterPrivateState', CounterPrivateState> = levelPrivateStateProvider({
-    privateStateStoreName: 'counter-private-state',
+    privateStateStoreName: contractConfig.privateStateStoreName,
   });
   const proofProvider = proofClient(walletAPI.uris.proverServerUri);
   return {
