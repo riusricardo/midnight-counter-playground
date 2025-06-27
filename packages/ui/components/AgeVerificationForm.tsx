@@ -1,3 +1,4 @@
+/* global console, TextEncoder, TextDecoder */
 import React, { useState } from 'react';
 import { Box, Button, TextField, Typography, Paper, Alert, CircularProgress } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -20,7 +21,7 @@ export interface CredentialSubjectData {
 }
 
 interface AgeVerificationFormProps {
-  onSubmit: (credentialData: CredentialSubjectData) => Promise<void>;
+  onSubmit: (data: CredentialSubjectData) => Promise<void>;
   isLoading?: boolean;
   error?: Error | null;
 }
@@ -94,9 +95,33 @@ export const AgeVerificationForm: React.FC<AgeVerificationFormProps> = ({ onSubm
         birth_timestamp: BigInt(formData.birthDate!.valueOf()),
       };
 
+      // Validate the credential data format before submitting
+      console.log('Generated credential data:', {
+        id_length: credentialData.id.length,
+        first_name_length: credentialData.first_name.length,
+        last_name_length: credentialData.last_name.length,
+        birth_timestamp_type: typeof credentialData.birth_timestamp,
+        birth_timestamp_value: credentialData.birth_timestamp.toString(),
+        first_name_preview: new TextDecoder().decode(credentialData.first_name.slice(0, formData.firstName.length)),
+        last_name_preview: new TextDecoder().decode(credentialData.last_name.slice(0, formData.lastName.length)),
+      });
+
+      // Ensure all byte arrays are exactly 32 bytes
+      if (credentialData.id.length !== 32) {
+        throw new Error(`ID array length is ${credentialData.id.length}, expected 32`);
+      }
+      if (credentialData.first_name.length !== 32) {
+        throw new Error(`First name array length is ${credentialData.first_name.length}, expected 32`);
+      }
+      if (credentialData.last_name.length !== 32) {
+        throw new Error(`Last name array length is ${credentialData.last_name.length}, expected 32`);
+      }
+
+      console.log('Age verification form validation passed, submitting credential data');
       await onSubmit(credentialData);
     } catch (err) {
       console.error('Error submitting age verification:', err);
+      throw err; // Re-throw to show error in UI
     }
   };
 
@@ -125,46 +150,61 @@ export const AgeVerificationForm: React.FC<AgeVerificationFormProps> = ({ onSubm
         )}
 
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-          <TextField
-            fullWidth
-            label="First Name"
-            value={formData.firstName}
-            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-            error={!!validationErrors.firstName}
-            helperText={validationErrors.firstName}
-            margin="normal"
-            required
-            disabled={isLoading}
-          />
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+              First Name
+            </Typography>
+            <TextField
+              fullWidth
+              label="First Name"
+              value={formData.firstName}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              error={!!validationErrors.firstName}
+              helperText={validationErrors.firstName}
+              required
+              disabled={isLoading}
+              sx={{ mt: 0 }}
+            />
+          </Box>
 
-          <TextField
-            fullWidth
-            label="Last Name"
-            value={formData.lastName}
-            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-            error={!!validationErrors.lastName}
-            helperText={validationErrors.lastName}
-            margin="normal"
-            required
-            disabled={isLoading}
-          />
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+              Last Name
+            </Typography>
+            <TextField
+              fullWidth
+              label="Last Name"
+              value={formData.lastName}
+              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              error={!!validationErrors.lastName}
+              helperText={validationErrors.lastName}
+              required
+              disabled={isLoading}
+              sx={{ mt: 0 }}
+            />
+          </Box>
 
-          <DatePicker
-            label="Birth Date"
-            value={formData.birthDate}
-            onChange={(newValue) => setFormData({ ...formData, birthDate: newValue })}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                margin: 'normal',
-                required: true,
-                error: !!validationErrors.birthDate,
-                helperText: validationErrors.birthDate,
-                disabled: isLoading,
-              },
-            }}
-            maxDate={dayjs().subtract(18, 'year')}
-          />
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+              Birth Date
+            </Typography>
+            <DatePicker
+              label="Birth Date"
+              value={formData.birthDate}
+              onChange={(newValue) => setFormData({ ...formData, birthDate: newValue })}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  required: true,
+                  error: !!validationErrors.birthDate,
+                  helperText: validationErrors.birthDate,
+                  disabled: isLoading,
+                  sx: { mt: 0 },
+                },
+              }}
+              maxDate={dayjs().subtract(18, 'year')}
+            />
+          </Box>
 
           {age !== null && (
             <Typography

@@ -3,8 +3,8 @@
 import { type CredentialSubject, pureCircuits } from '@midnight-ntwrk/counter-contract';
 import { toHex } from '@midnight-ntwrk/midnight-js-utils';
 
-export function hashSubject(subject: CredentialSubject): string {
-  return toHex(pureCircuits.subject_hash(subject));
+export function hashSubject(subject_birth: bigint): string {
+  return toHex(pureCircuits.subject_hash(subject_birth));
 }
 
 export function randomBytes(length: number): Uint8Array {

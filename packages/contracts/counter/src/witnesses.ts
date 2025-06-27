@@ -51,16 +51,7 @@ export const witnesses = {
   ] => {
     if (privateState.CredentialSubject) {
       return [privateState, privateState.CredentialSubject];
-    } else {
-      // Return a dummy credential subject if none exists
-      const dummyCredential: CredentialSubject = {
-        id: new Uint8Array(32).fill(0),
-        first_name: new Uint8Array(32).fill(0),
-        last_name: new Uint8Array(32).fill(0),
-        birth_timestamp: 0n
-      };
-      return [privateState, dummyCredential];
-    }
+    } else throw new Error("No identity found");
   },
   get_current_time: ({
     privateState

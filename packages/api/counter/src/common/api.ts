@@ -318,8 +318,44 @@ export class CounterAPI implements DeployedCounterAPI {
    */
   async updateCredentialSubject(credentialSubject: any): Promise<void> {
     try {
+      // Validate credential subject format before storing
+      if (!credentialSubject) {
+        throw new Error('Credential subject cannot be null or undefined');
+      }
+
+      if (!credentialSubject.id || !(credentialSubject.id instanceof Uint8Array) || credentialSubject.id.length !== 32) {
+        throw new Error('Credential subject ID must be a Uint8Array of length 32');
+      }
+
+      if (!credentialSubject.first_name || !(credentialSubject.first_name instanceof Uint8Array) || credentialSubject.first_name.length !== 32) {
+        throw new Error('Credential subject first_name must be a Uint8Array of length 32');
+      }
+
+      if (!credentialSubject.last_name || !(credentialSubject.last_name instanceof Uint8Array) || credentialSubject.last_name.length !== 32) {
+        throw new Error('Credential subject last_name must be a Uint8Array of length 32');
+      }
+
+      if (typeof credentialSubject.birth_timestamp !== 'bigint') {
+        throw new Error('Credential subject birth_timestamp must be a bigint');
+      }
+
+      console.log('Credential subject validation passed:', {
+        id_length: credentialSubject.id.length,
+        first_name_length: credentialSubject.first_name.length,
+        last_name_length: credentialSubject.last_name.length,
+        birth_timestamp_type: typeof credentialSubject.birth_timestamp,
+        birth_timestamp_value: credentialSubject.birth_timestamp.toString(),
+        birth_timestamp_valid: credentialSubject.birth_timestamp > 0n,
+      });
+
       // Get current private state
       const currentState = await this.providers.privateStateProvider.get('counterPrivateState');
+      console.log('Current private state before update:', {
+        hasState: !!currentState,
+        hasValue: typeof currentState?.value === 'number',
+        hasCredentialSubject: !!currentState?.CredentialSubject,
+        value: currentState?.value ?? 0,
+      });
 
       // Create updated state with new credential subject
       const updatedState: CounterPrivateState = {
@@ -328,12 +364,29 @@ export class CounterAPI implements DeployedCounterAPI {
         CredentialSubject: credentialSubject,
       };
 
+      console.log('Updated state to be saved:', {
+        value: updatedState.value,
+        hasCredentialSubject: !!updatedState.CredentialSubject,
+        credentialSubjectKeys: updatedState.CredentialSubject ? Object.keys(updatedState.CredentialSubject) : [],
+      });
+
       // Save updated state
       await this.providers.privateStateProvider.set('counterPrivateState', updatedState);
-      console.log('Updated private state with credential subject');
+      console.log('Updated private state with credential subject successfully');
+
+      // Verify the data was saved correctly by reading it back
+      const verificationState = await this.providers.privateStateProvider.get('counterPrivateState');
+      console.log('Verification read after save:', {
+        hasCredentialSubject: !!verificationState?.CredentialSubject,
+        credentialDataPresent: !!verificationState?.CredentialSubject && 
+          !!verificationState.CredentialSubject.id && 
+          !!verificationState.CredentialSubject.first_name && 
+          !!verificationState.CredentialSubject.last_name && 
+          typeof verificationState.CredentialSubject.birth_timestamp === 'bigint',
+      });
     } catch (error) {
       console.error('Error updating credential subject:', error);
-      throw new Error('Failed to update credential information');
+      throw new Error(`Failed to update credential information: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

@@ -20,9 +20,10 @@ interface CounterReaderContextType {
   refreshValue: () => Promise<void>;
   hasRealtimeUpdates: boolean;
   incrementCounter: () => Promise<void>;
-  isUserVerified: boolean;
+  showAgeVerification: boolean;
   isVerificationLoading: boolean;
   updateCredentialSubject: (credentialData: any) => Promise<void>;
+  closeAgeVerification: () => void;
 }
 
 const CounterReaderContext = React.createContext<CounterReaderContextType>({
@@ -34,9 +35,10 @@ const CounterReaderContext = React.createContext<CounterReaderContextType>({
   refreshValue: async () => {},
   hasRealtimeUpdates: false,
   incrementCounter: async () => {},
-  isUserVerified: false,
+  showAgeVerification: false,
   isVerificationLoading: false,
   updateCredentialSubject: async () => {},
+  closeAgeVerification: () => {},
 });
 
 export const useCounterReader = () => {
@@ -61,24 +63,17 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
   const [hasRealtimeUpdates, setHasRealtimeUpdates] = useState<boolean>(false);
   const [isUserVerified, setIsUserVerified] = useState<boolean>(false);
   const [isVerificationLoading, setIsVerificationLoading] = useState<boolean>(false);
+  const [showAgeVerification, setShowAgeVerification] = useState<boolean>(false);
+  const [verifiedContracts, setVerifiedContracts] = useState<Set<string>>(new Set());
 
-  // Check verification status when counterApi is ready
-  useEffect(() => {
-    const checkVerificationStatus = async () => {
-      if (counterApi) {
-        try {
-          const verifiedResult = await (counterApi as any).isUserVerified();
-          const verified = Boolean(verifiedResult);
-          setIsUserVerified(verified);
-        } catch (err) {
-          console.error('Error checking verification status:', err);
-          setIsUserVerified(false);
-        }
-      }
-    };
+  // Helper function to check if current contract is verified
+  const isContractVerified = (address: string): boolean => {
+    return verifiedContracts.has(address);
+  };
 
-    void checkVerificationStatus();
-  }, [counterApi]);
+  const closeAgeVerification = () => {
+    setShowAgeVerification(false);
+  };
 
   const updateCredentialSubject = async (credentialData: any) => {
     if (!counterApi) {
@@ -91,12 +86,11 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
 
       await (counterApi as any).updateCredentialSubject(credentialData);
 
-      // Check verification status after update
-      const verifiedResult = await (counterApi as any).isUserVerified();
-      const verified = Boolean(verifiedResult);
-      setIsUserVerified(verified);
+      // Mark this contract as verified
+      setVerifiedContracts(prev => new Set([...prev, contractAddress]));
+      setShowAgeVerification(false);
 
-      console.log('Successfully updated credential subject');
+      console.log('Successfully updated credential subject for contract:', contractAddress);
     } catch (err) {
       console.error('Error updating credential subject:', err);
       setError(err instanceof Error ? err : new Error('Failed to update credential information'));
@@ -235,9 +229,9 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
       return;
     }
 
-    // Check if user is verified before allowing increment
-    if (!isUserVerified) {
-      setError(new Error('Age verification required before incrementing counter'));
+    // Check if user is verified for this specific contract
+    if (!isContractVerified(contractAddress)) {
+      setShowAgeVerification(true);
       return;
     }
 
@@ -297,9 +291,10 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
         refreshValue,
         hasRealtimeUpdates,
         incrementCounter,
-        isUserVerified,
+        showAgeVerification,
         isVerificationLoading,
         updateCredentialSubject,
+        closeAgeVerification,
       }}
     >
       {children}
@@ -315,9 +310,10 @@ export const CounterReaderDisplay: React.FC = () => {
     contractExists,
     refreshValue,
     incrementCounter,
-    isUserVerified,
+    showAgeVerification,
     isVerificationLoading,
     updateCredentialSubject,
+    closeAgeVerification,
   } = useCounterReader();
 
   const handleAgeVerification = async (credentialData: CredentialSubjectData) => {
@@ -390,15 +386,6 @@ export const CounterReaderDisplay: React.FC = () => {
     );
   }
 
-  // Show age verification form if user is not verified
-  if (!isUserVerified) {
-    return (
-      <div className="counter-reader-container">
-        <AgeVerificationForm onSubmit={handleAgeVerification} isLoading={isVerificationLoading} error={error} />
-      </div>
-    );
-  }
-
   return (
     <div
       className="counter-reader-container"
@@ -411,6 +398,50 @@ export const CounterReaderDisplay: React.FC = () => {
         margin: '0 auto',
       }}
     >
+      {/* Age Verification Modal */}
+      {showAgeVerification && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={closeAgeVerification}
+              style={{
+                position: 'absolute',
+                top: -10,
+                right: -10,
+                background: '#ff1744',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: 30,
+                height: 30,
+                cursor: 'pointer',
+                zIndex: 1001,
+                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ×
+            </button>
+            <AgeVerificationForm onSubmit={handleAgeVerification} isLoading={isVerificationLoading} error={error} />
+          </div>
+        </div>
+      )}
+
       <h2
         style={{
           margin: '0 0 20px 0',

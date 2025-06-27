@@ -70,4 +70,88 @@ describe('API', () => {
     expect(counterAfter.counterValue).toEqual(BigInt(1));
     expect(counterAfter.contractAddress).toEqual(counter.contractAddress);
   });
+
+  it('should store and retrieve credential subject in CounterPrivateState [@slow]', async () => {
+    // Deploy a new contract for this test
+    const counterApi = await CounterAPI.deploy(providers, { value: 0 });
+    expect(counterApi).not.toBeNull();
+
+    // Create test credential data matching the CredentialSubject structure
+    const testCredentialSubject = {
+      id: new Uint8Array(32).fill(1), // Test ID
+      first_name: new TextEncoder().encode('TestUser').slice(0, 32), // Encode and pad to 32 bytes
+      last_name: new TextEncoder().encode('TestLastName').slice(0, 32), // Encode and pad to 32 bytes
+      birth_timestamp: BigInt(Date.now() - (25 * 365 * 24 * 60 * 60 * 1000)), // 25 years ago
+    };
+
+    // Pad the byte arrays to 32 bytes
+    const paddedFirstName = new Uint8Array(32);
+    paddedFirstName.set(testCredentialSubject.first_name);
+    
+    const paddedLastName = new Uint8Array(32);
+    paddedLastName.set(testCredentialSubject.last_name);
+
+    const finalCredentialSubject = {
+      id: testCredentialSubject.id,
+      first_name: paddedFirstName,
+      last_name: paddedLastName,
+      birth_timestamp: testCredentialSubject.birth_timestamp,
+    };
+
+    // Initially, no credential subject should exist
+    const initialCredential = await counterApi.getCredentialSubject();
+    expect(initialCredential).toBeNull();
+
+    // User should not be verified initially
+    const initialVerification = await counterApi.isUserVerified();
+    expect(initialVerification).toBe(false);
+
+    // Update the credential subject
+    await counterApi.updateCredentialSubject(finalCredentialSubject);
+
+    // Retrieve the credential subject
+    const retrievedCredential = await counterApi.getCredentialSubject();
+    expect(retrievedCredential).not.toBeNull();
+    expect(retrievedCredential.id).toEqual(finalCredentialSubject.id);
+    expect(retrievedCredential.first_name).toEqual(finalCredentialSubject.first_name);
+    expect(retrievedCredential.last_name).toEqual(finalCredentialSubject.last_name);
+    expect(retrievedCredential.birth_timestamp).toEqual(finalCredentialSubject.birth_timestamp);
+
+    // User should now be verified (over 18)
+    const finalVerification = await counterApi.isUserVerified();
+    expect(finalVerification).toBe(true);
+
+    // Test that the private state persists across API calls
+    const retrievedAgain = await counterApi.getCredentialSubject();
+    expect(retrievedAgain).toEqual(retrievedCredential);
+  });
+
+  it('should correctly validate age verification [@slow]', async () => {
+    // Deploy a new contract for this test
+    const counterApi = await CounterAPI.deploy(providers, { value: 0 });
+
+    // Test with under-age user (17 years old)
+    const underageCredential = {
+      id: new Uint8Array(32).fill(2),
+      first_name: new Uint8Array(32).fill(0),
+      last_name: new Uint8Array(32).fill(0),
+      birth_timestamp: BigInt(Date.now() - (17 * 365 * 24 * 60 * 60 * 1000)), // 17 years ago
+    };
+
+    await counterApi.updateCredentialSubject(underageCredential);
+    const underageVerification = await counterApi.isUserVerified();
+    expect(underageVerification).toBe(false);
+
+    // Test with legal age user (18 years old)
+    const legalAgeCredential = {
+      id: new Uint8Array(32).fill(3),
+      first_name: new Uint8Array(32).fill(0),
+      last_name: new Uint8Array(32).fill(0),
+      birth_timestamp: BigInt(Date.now() - (18 * 365 * 24 * 60 * 60 * 1000)), // Exactly 18 years ago
+    };
+
+    await counterApi.updateCredentialSubject(legalAgeCredential);
+    const legalAgeVerification = await counterApi.isUserVerified();
+    expect(legalAgeVerification).toBe(true);
+  });
 });

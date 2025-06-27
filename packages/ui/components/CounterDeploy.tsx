@@ -18,9 +18,10 @@ interface CounterContextType {
   counterValue: bigint | null;
   isLoading: boolean;
   error: Error | null;
-  isUserVerified: boolean;
+  showAgeVerification: boolean;
   isVerificationLoading: boolean;
   updateCredentialSubject: (credentialData: any) => Promise<void>;
+  closeAgeVerification: () => void;
 }
 
 const CounterContext = React.createContext<CounterContextType>({
@@ -29,9 +30,10 @@ const CounterContext = React.createContext<CounterContextType>({
   counterValue: null,
   isLoading: false,
   error: null,
-  isUserVerified: false,
+  showAgeVerification: false,
   isVerificationLoading: false,
   updateCredentialSubject: async () => {},
+  closeAgeVerification: () => {},
 });
 
 export const useCounter = () => {
@@ -48,25 +50,18 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
   const [counterValue, setCounterValue] = useState<bigint | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
-  const [isUserVerified, setIsUserVerified] = useState<boolean>(false);
+  const [showAgeVerification, setShowAgeVerification] = useState<boolean>(false);
   const [isVerificationLoading, setIsVerificationLoading] = useState<boolean>(false);
+  const [verifiedContracts, setVerifiedContracts] = useState<Set<string>>(new Set());
 
-  // Check verification status when counterApi is ready
-  useEffect(() => {
-    const checkVerificationStatus = async () => {
-      if (counterApi) {
-        try {
-          const verified = await counterApi.isUserVerified();
-          setIsUserVerified(verified);
-        } catch (err) {
-          console.error('Error checking verification status:', err);
-          setIsUserVerified(false);
-        }
-      }
-    };
+  // Helper function to check if current contract is verified
+  const isContractVerified = (address: string): boolean => {
+    return verifiedContracts.has(address);
+  };
 
-    void checkVerificationStatus();
-  }, [counterApi]);
+  const closeAgeVerification = () => {
+    setShowAgeVerification(false);
+  };
 
   const updateCredentialSubject = async (credentialData: any) => {
     if (!counterApi) {
@@ -77,13 +72,13 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
       setIsVerificationLoading(true);
       setError(null);
 
-      await counterApi.updateCredentialSubject(credentialData);
+      await (counterApi as any).updateCredentialSubject(credentialData);
 
-      // Check verification status after update
-      const verified = await counterApi.isUserVerified();
-      setIsUserVerified(verified);
+      // Mark this contract as verified
+      setVerifiedContracts(prev => new Set([...prev, contractAddress]));
+      setShowAgeVerification(false);
 
-      console.log('Successfully updated credential subject');
+      console.log('Successfully updated credential subject for contract:', contractAddress);
     } catch (err) {
       console.error('Error updating credential subject:', err);
       setError(err instanceof Error ? err : new Error('Failed to update credential information'));
@@ -164,9 +159,9 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
       return;
     }
 
-    // Check if user is verified before allowing increment
-    if (!isUserVerified) {
-      setError(new Error('Age verification required before incrementing counter'));
+    // Check if user is verified for this specific contract
+    if (!isContractVerified(contractAddress)) {
+      setShowAgeVerification(true);
       return;
     }
 
@@ -223,9 +218,10 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
         counterValue,
         isLoading,
         error,
-        isUserVerified,
+        showAgeVerification,
         isVerificationLoading,
         updateCredentialSubject,
+        closeAgeVerification,
       }}
     >
       {children}
@@ -239,9 +235,10 @@ export const CounterDisplay: React.FC<{ contractAddress: ContractAddress }> = ({
     isLoading,
     error,
     incrementCounter,
-    isUserVerified,
+    showAgeVerification,
     isVerificationLoading,
     updateCredentialSubject,
+    closeAgeVerification,
   } = useCounter();
 
   // Helper to format contract address for display
@@ -284,17 +281,52 @@ export const CounterDisplay: React.FC<{ contractAddress: ContractAddress }> = ({
     );
   }
 
-  // Show age verification form if user is not verified
-  if (!isUserVerified) {
-    return (
-      <div className="counter-container">
-        <AgeVerificationForm onSubmit={handleAgeVerification} isLoading={isVerificationLoading} error={error} />
-      </div>
-    );
-  }
-
   return (
     <div>
+      {/* Age Verification Modal */}
+      {showAgeVerification && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={closeAgeVerification}
+              style={{
+                position: 'absolute',
+                top: -10,
+                right: -10,
+                background: '#ff1744',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: 30,
+                height: 30,
+                cursor: 'pointer',
+                zIndex: 1001,
+                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ×
+            </button>
+            <AgeVerificationForm onSubmit={handleAgeVerification} isLoading={isVerificationLoading} error={error} />
+          </div>
+        </div>
+      )}
+
       {/* Contract Address Display */}
       <div
         style={{

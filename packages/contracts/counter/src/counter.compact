@@ -30,8 +30,9 @@ export ledger credentialHashes: Map<Bytes<32>, Bytes<32>>; // Id to hash(Credent
 witness get_identity(): CredentialSubject; // Retrieve the identity details privately
 witness get_current_time(): Uint<64>; // Retrieve the current time from the system
 
-export pure circuit subject_hash(credentialSubject: CredentialSubject): Bytes<32> {
-  return persistentHash<CredentialSubject>(credentialSubject);
+// This is not a safe implementation because the hash is not unique and can be guessed.
+export pure circuit subject_hash(birthTimestamp: Uint<64>): Bytes<32> {
+  return persistentHash<Uint<64>>(birthTimestamp);
 }
 
 export circuit verify_identity(): Boolean {
@@ -42,19 +43,29 @@ export circuit verify_identity(): Boolean {
   assert(identity.last_name != default<Bytes<32>>, "Last name cannot be empty");
   assert(identity.birth_timestamp > 0, "Birth timestamp must be a positive number");
 
-  const subjectHash = subject_hash(identity);
-  
+  // Keep the birth date semi-private by hashing it.
+  const subjectHash = subject_hash(identity.birth_timestamp);
+  const exists = credentialHashes.member(disclose(identity.id));
+
+  if(exists) {
+    // If the identity already exists, check if the hash matches
+     assert(credentialHashes.lookup(disclose(identity.id)) == subjectHash, "Credential subject hash mismatch");
+  } else {
+     credentialHashes.insert(disclose(identity.id), disclose(subjectHash));
+  }
+
   // Temporary solution for timestamp. Timestamps aren't inherently trusted so a better pattern needs to be applied.
   // This is a workaround to ensure the user is over 18 years old.
   const current_time = get_current_time();
   assert((current_time - identity.birth_timestamp) > 18 * 365 * 24 * 60 * 60 * 1000, "User is not over 18 years old");
-
+  // If all checks pass, the identity is valid
   return true;
 }
 
 // transition function changing public state
 export circuit increment(): [] {
-  const identity = get_identity();
+
+  assert(verify_identity(), "Identity verification failed");
 
   round.increment(1);
 }
