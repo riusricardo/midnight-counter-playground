@@ -12,6 +12,11 @@
     "@repo/counter-api": "^0.0.1"
   },
 
+  "devDependencies": {
+    "eslint": "^9.28.0",
+    "typescript": "^5.8.3"
+  },
+
   "scripts": {
     "build": "rm -rf dist && tsc --project tsconfig.build.json",
     "lint": "eslint src",

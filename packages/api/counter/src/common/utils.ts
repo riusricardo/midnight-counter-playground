@@ -1,10 +1,17 @@
 // Utility functions for API usage
 
-export const randomBytes = (length: number): Uint8Array => {
+import { type CredentialSubject, pureCircuits } from '@midnight-ntwrk/counter-contract';
+import { toHex } from '@midnight-ntwrk/midnight-js-utils';
+
+export function hashSubject(subject: CredentialSubject): string {
+  return toHex(pureCircuits.subject_hash(subject));
+}
+
+export function randomBytes(length: number): Uint8Array {
   const bytes = new Uint8Array(length);
   crypto.getRandomValues(bytes);
   return bytes;
-};
+}
 
 export function pad(s: string, n: number): Uint8Array {
   const encoder = new TextEncoder();

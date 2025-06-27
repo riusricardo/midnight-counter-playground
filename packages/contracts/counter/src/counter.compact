@@ -1,5 +1,4 @@
-// This file is part of midnightntwrk/example-counter.
-// Copyright (C) 2025 Midnight Foundation
+
 // SPDX-License-Identifier: Apache-2.0
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -17,10 +16,46 @@ pragma language_version 0.16;
 
 import CompactStandardLibrary;
 
-// public state
+export struct CredentialSubject {
+    id: Bytes<32>; // The id of the subject (midnight wallet own_public_key)
+    first_name: Bytes<32>; // The first name of the subject
+    last_name: Bytes<32>; // The last name of the subject
+    birth_timestamp: Uint<64>; // The birth timestamp of the subject
+}
+
+// Public state
 export ledger round: Counter;
+export ledger credentialHashes: Map<Bytes<32>, Bytes<32>>; // Id to hash(CredentialSubject)
+
+witness get_identity(): CredentialSubject; // Retrieve the identity details privately
+witness get_current_time(): Uint<64>; // Retrieve the current time from the system
+
+export pure circuit subject_hash(credentialSubject: CredentialSubject): Bytes<32> {
+  return persistentHash<CredentialSubject>(credentialSubject);
+}
+
+export circuit verify_identity(): Boolean {
+  const identity = get_identity();
+  // Check if the identity is valid
+  assert(identity.id != default<Bytes<32>>, "Identity ID cannot be empty");
+  assert(identity.first_name != default<Bytes<32>>, "First name cannot be empty");
+  assert(identity.last_name != default<Bytes<32>>, "Last name cannot be empty");
+  assert(identity.birth_timestamp > 0, "Birth timestamp must be a positive number");
+
+  const subjectHash = subject_hash(identity);
+  
+  // Temporary solution for timestamp. Timestamps aren't inherently trusted so a better pattern needs to be applied.
+  // This is a workaround to ensure the user is over 18 years old.
+  const current_time = get_current_time();
+  assert((current_time - identity.birth_timestamp) > 18 * 365 * 24 * 60 * 60 * 1000, "User is not over 18 years old");
+
+  return true;
+}
 
 // transition function changing public state
 export circuit increment(): [] {
+  const identity = get_identity();
+
   round.increment(1);
 }
+
