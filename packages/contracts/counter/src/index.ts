@@ -22,4 +22,4 @@ export type { CounterPrivateState } from "./witnesses.js";
 export { witnesses } from "./witnesses.js";
 export { createCounterPrivateState } from "./witnesses.js";
 // Re-export the types explicitly
-export type { CredentialSubject};
+export type { CredentialSubject };

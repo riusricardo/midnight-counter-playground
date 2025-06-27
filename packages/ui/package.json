@@ -29,7 +29,9 @@
     "@midnight-ntwrk/counter-cli": "0.1.0",
     "@mui/icons-material": "^7.1.1",
     "@mui/material": "^7.1.1",
+    "@mui/x-date-pickers": "^7.22.2",
     "@repo/counter-api": "*",
+    "dayjs": "^1.11.13",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

@@ -1,8 +1,9 @@
 /* global console */
 import React, { useState, useEffect } from 'react';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { CounterAPI, type CounterState, type CounterProviders } from '@repo/counter-api';
+import { CounterAPI, type CounterState, type CounterProviders } from '@repo/counter-api/common-api';
 import { CircularProgress } from '@mui/material';
+import { AgeVerificationForm, type CredentialSubjectData } from './AgeVerificationForm';
 
 interface CounterReaderProviderProps {
   contractAddress: ContractAddress;
@@ -19,6 +20,9 @@ interface CounterReaderContextType {
   refreshValue: () => Promise<void>;
   hasRealtimeUpdates: boolean;
   incrementCounter: () => Promise<void>;
+  isUserVerified: boolean;
+  isVerificationLoading: boolean;
+  updateCredentialSubject: (credentialData: any) => Promise<void>;
 }
 
 const CounterReaderContext = React.createContext<CounterReaderContextType>({
@@ -30,6 +34,9 @@ const CounterReaderContext = React.createContext<CounterReaderContextType>({
   refreshValue: async () => {},
   hasRealtimeUpdates: false,
   incrementCounter: async () => {},
+  isUserVerified: false,
+  isVerificationLoading: false,
+  updateCredentialSubject: async () => {},
 });
 
 export const useCounterReader = () => {
@@ -52,6 +59,52 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
   const [error, setError] = useState<Error | null>(null);
   const [contractExists, setContractExists] = useState<boolean>(false);
   const [hasRealtimeUpdates, setHasRealtimeUpdates] = useState<boolean>(false);
+  const [isUserVerified, setIsUserVerified] = useState<boolean>(false);
+  const [isVerificationLoading, setIsVerificationLoading] = useState<boolean>(false);
+
+  // Check verification status when counterApi is ready
+  useEffect(() => {
+    const checkVerificationStatus = async () => {
+      if (counterApi) {
+        try {
+          const verifiedResult = await (counterApi as any).isUserVerified();
+          const verified = Boolean(verifiedResult);
+          setIsUserVerified(verified);
+        } catch (err) {
+          console.error('Error checking verification status:', err);
+          setIsUserVerified(false);
+        }
+      }
+    };
+
+    void checkVerificationStatus();
+  }, [counterApi]);
+
+  const updateCredentialSubject = async (credentialData: any) => {
+    if (!counterApi) {
+      throw new Error('Counter API not initialized');
+    }
+
+    try {
+      setIsVerificationLoading(true);
+      setError(null);
+
+      await (counterApi as any).updateCredentialSubject(credentialData);
+
+      // Check verification status after update
+      const verifiedResult = await (counterApi as any).isUserVerified();
+      const verified = Boolean(verifiedResult);
+      setIsUserVerified(verified);
+
+      console.log('Successfully updated credential subject');
+    } catch (err) {
+      console.error('Error updating credential subject:', err);
+      setError(err instanceof Error ? err : new Error('Failed to update credential information'));
+      throw err;
+    } finally {
+      setIsVerificationLoading(false);
+    }
+  };
 
   // Wrapper function to safely call getCounterState
   const getCounterValueSafely = async (): Promise<bigint> => {
@@ -182,6 +235,12 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
       return;
     }
 
+    // Check if user is verified before allowing increment
+    if (!isUserVerified) {
+      setError(new Error('Age verification required before incrementing counter'));
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -238,6 +297,9 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
         refreshValue,
         hasRealtimeUpdates,
         incrementCounter,
+        isUserVerified,
+        isVerificationLoading,
+        updateCredentialSubject,
       }}
     >
       {children}
@@ -246,7 +308,21 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
 };
 
 export const CounterReaderDisplay: React.FC = () => {
-  const { counterValue, isLoading, error, contractExists, refreshValue, incrementCounter } = useCounterReader();
+  const {
+    counterValue,
+    isLoading,
+    error,
+    contractExists,
+    refreshValue,
+    incrementCounter,
+    isUserVerified,
+    isVerificationLoading,
+    updateCredentialSubject,
+  } = useCounterReader();
+
+  const handleAgeVerification = async (credentialData: CredentialSubjectData) => {
+    await updateCredentialSubject(credentialData);
+  };
 
   if (isLoading) {
     return (
@@ -310,6 +386,15 @@ export const CounterReaderDisplay: React.FC = () => {
         >
           Contract not found or is not a valid counter contract.
         </div>
+      </div>
+    );
+  }
+
+  // Show age verification form if user is not verified
+  if (!isUserVerified) {
+    return (
+      <div className="counter-reader-container">
+        <AgeVerificationForm onSubmit={handleAgeVerification} isLoading={isVerificationLoading} error={error} />
       </div>
     );
   }

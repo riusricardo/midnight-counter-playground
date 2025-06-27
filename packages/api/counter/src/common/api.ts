@@ -309,6 +309,78 @@ export class CounterAPI implements DeployedCounterAPI {
   }
 
   // ========================================
+  // CREDENTIAL MANAGEMENT METHODS
+  // ========================================
+
+  /**
+   * Update the private state with credential subject information
+   * @param credentialSubject - The credential subject data to store
+   */
+  async updateCredentialSubject(credentialSubject: any): Promise<void> {
+    try {
+      // Get current private state
+      const currentState = await this.providers.privateStateProvider.get('counterPrivateState');
+
+      // Create updated state with new credential subject
+      const updatedState: CounterPrivateState = {
+        ...currentState,
+        value: currentState?.value ?? 0,
+        CredentialSubject: credentialSubject,
+      };
+
+      // Save updated state
+      await this.providers.privateStateProvider.set('counterPrivateState', updatedState);
+      console.log('Updated private state with credential subject');
+    } catch (error) {
+      console.error('Error updating credential subject:', error);
+      throw new Error('Failed to update credential information');
+    }
+  }
+
+  /**
+   * Get the current credential subject from private state
+   * @returns The credential subject or null if not set
+   */
+  async getCredentialSubject(): Promise<any | null> {
+    try {
+      const privateState = await this.providers.privateStateProvider.get('counterPrivateState');
+      return privateState?.CredentialSubject ?? null;
+    } catch (error) {
+      console.error('Error getting credential subject:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Check if the user is verified (has valid credential subject)
+   * @returns True if the user has a valid credential subject
+   */
+  async isUserVerified(): Promise<boolean> {
+    const credentialSubject = await this.getCredentialSubject();
+    if (!credentialSubject) return false;
+
+    // Check if the user is at least 18 years old
+    const currentTime = BigInt(Date.now());
+    const eighteenYearsInMs = BigInt(18 * 365 * 24 * 60 * 60 * 1000);
+
+    return currentTime - credentialSubject.birth_timestamp >= eighteenYearsInMs;
+  }
+
+  /**
+   * Static method to update credential subject for any CounterAPI instance
+   */
+  static async updateCredentialSubject(counterApi: CounterAPI, credentialSubject: any): Promise<void> {
+    return counterApi.updateCredentialSubject(credentialSubject);
+  }
+
+  /**
+   * Static method to check if user is verified for any CounterAPI instance
+   */
+  static async isUserVerified(counterApi: CounterAPI): Promise<boolean> {
+    return counterApi.isUserVerified();
+  }
+
+  // ========================================
   // UTILITY METHODS
   // ========================================
 

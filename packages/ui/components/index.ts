@@ -1,4 +1,5 @@
 export { default as App } from './App.js';
+export * from './AgeVerificationForm.js';
 export * from './CounterDeploy.js';
 export * from './CounterReader.js';
 export * from './MidnightWallet.js';

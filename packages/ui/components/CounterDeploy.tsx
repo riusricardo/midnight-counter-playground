@@ -4,6 +4,7 @@ import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
 import { CounterAPI, type CounterState, type CounterProviders } from '@repo/counter-api/common-api';
 import { type CounterPrivateState } from '@midnight-ntwrk/counter-contract';
 import { CircularProgress } from '@mui/material';
+import { AgeVerificationForm, type CredentialSubjectData } from './AgeVerificationForm';
 
 interface CounterProviderProps {
   contractAddress: ContractAddress;
@@ -17,6 +18,9 @@ interface CounterContextType {
   counterValue: bigint | null;
   isLoading: boolean;
   error: Error | null;
+  isUserVerified: boolean;
+  isVerificationLoading: boolean;
+  updateCredentialSubject: (credentialData: any) => Promise<void>;
 }
 
 const CounterContext = React.createContext<CounterContextType>({
@@ -25,6 +29,9 @@ const CounterContext = React.createContext<CounterContextType>({
   counterValue: null,
   isLoading: false,
   error: null,
+  isUserVerified: false,
+  isVerificationLoading: false,
+  updateCredentialSubject: async () => {},
 });
 
 export const useCounter = () => {
@@ -41,6 +48,50 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
   const [counterValue, setCounterValue] = useState<bigint | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const [isUserVerified, setIsUserVerified] = useState<boolean>(false);
+  const [isVerificationLoading, setIsVerificationLoading] = useState<boolean>(false);
+
+  // Check verification status when counterApi is ready
+  useEffect(() => {
+    const checkVerificationStatus = async () => {
+      if (counterApi) {
+        try {
+          const verified = await counterApi.isUserVerified();
+          setIsUserVerified(verified);
+        } catch (err) {
+          console.error('Error checking verification status:', err);
+          setIsUserVerified(false);
+        }
+      }
+    };
+
+    void checkVerificationStatus();
+  }, [counterApi]);
+
+  const updateCredentialSubject = async (credentialData: any) => {
+    if (!counterApi) {
+      throw new Error('Counter API not initialized');
+    }
+
+    try {
+      setIsVerificationLoading(true);
+      setError(null);
+
+      await counterApi.updateCredentialSubject(credentialData);
+
+      // Check verification status after update
+      const verified = await counterApi.isUserVerified();
+      setIsUserVerified(verified);
+
+      console.log('Successfully updated credential subject');
+    } catch (err) {
+      console.error('Error updating credential subject:', err);
+      setError(err instanceof Error ? err : new Error('Failed to update credential information'));
+      throw err;
+    } finally {
+      setIsVerificationLoading(false);
+    }
+  };
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
@@ -113,6 +164,12 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
       return;
     }
 
+    // Check if user is verified before allowing increment
+    if (!isUserVerified) {
+      setError(new Error('Age verification required before incrementing counter'));
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -166,6 +223,9 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
         counterValue,
         isLoading,
         error,
+        isUserVerified,
+        isVerificationLoading,
+        updateCredentialSubject,
       }}
     >
       {children}
@@ -174,11 +234,23 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
 };
 
 export const CounterDisplay: React.FC<{ contractAddress: ContractAddress }> = ({ contractAddress }) => {
-  const { counterValue, isLoading, error, incrementCounter } = useCounter();
+  const {
+    counterValue,
+    isLoading,
+    error,
+    incrementCounter,
+    isUserVerified,
+    isVerificationLoading,
+    updateCredentialSubject,
+  } = useCounter();
 
   // Helper to format contract address for display
   const formatContractAddress = (address: string, groupSize = 4): string => {
     return address.replace(new RegExp(`(.{${groupSize}})`, 'g'), '$1 ').trim();
+  };
+
+  const handleAgeVerification = async (credentialData: CredentialSubjectData) => {
+    await updateCredentialSubject(credentialData);
   };
 
   if (isLoading) {
@@ -208,6 +280,15 @@ export const CounterDisplay: React.FC<{ contractAddress: ContractAddress }> = ({
         >
           <strong>Error:</strong> {error.message}
         </div>
+      </div>
+    );
+  }
+
+  // Show age verification form if user is not verified
+  if (!isUserVerified) {
+    return (
+      <div className="counter-container">
+        <AgeVerificationForm onSubmit={handleAgeVerification} isLoading={isVerificationLoading} error={error} />
       </div>
     );
   }

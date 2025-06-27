@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: Apache-2.0
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -20,7 +19,10 @@ import {
 
 import { WitnessContext } from "@midnight-ntwrk/compact-runtime";
 // eslint-disable-next-line prettier/prettier
-export type Contract<T, W extends Witnesses<T> = Witnesses<T>> = ContractType<T, W>;
+export type Contract<T, W extends Witnesses<T> = Witnesses<T>> = ContractType<
+  T,
+  W
+>;
 
 // This is how we type an empty object.
 export type CounterPrivateState = {
