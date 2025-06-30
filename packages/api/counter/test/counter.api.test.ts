@@ -81,13 +81,13 @@ describe('API', () => {
       id: new Uint8Array(32).fill(1), // Test ID
       first_name: new TextEncoder().encode('TestUser').slice(0, 32), // Encode and pad to 32 bytes
       last_name: new TextEncoder().encode('TestLastName').slice(0, 32), // Encode and pad to 32 bytes
-      birth_timestamp: BigInt(Date.now() - (25 * 365 * 24 * 60 * 60 * 1000)), // 25 years ago
+      birth_timestamp: BigInt(Date.now() - 25 * 365 * 24 * 60 * 60 * 1000), // 25 years ago
     };
 
     // Pad the byte arrays to 32 bytes
     const paddedFirstName = new Uint8Array(32);
     paddedFirstName.set(testCredentialSubject.first_name);
-    
+
     const paddedLastName = new Uint8Array(32);
     paddedLastName.set(testCredentialSubject.last_name);
 
@@ -135,7 +135,7 @@ describe('API', () => {
       id: new Uint8Array(32).fill(2),
       first_name: new Uint8Array(32).fill(0),
       last_name: new Uint8Array(32).fill(0),
-      birth_timestamp: BigInt(Date.now() - (17 * 365 * 24 * 60 * 60 * 1000)), // 17 years ago
+      birth_timestamp: BigInt(Date.now() - 17 * 365 * 24 * 60 * 60 * 1000), // 17 years ago
     };
 
     await counterApi.updateCredentialSubject(underageCredential);
@@ -147,7 +147,7 @@ describe('API', () => {
       id: new Uint8Array(32).fill(3),
       first_name: new Uint8Array(32).fill(0),
       last_name: new Uint8Array(32).fill(0),
-      birth_timestamp: BigInt(Date.now() - (18 * 365 * 24 * 60 * 60 * 1000)), // Exactly 18 years ago
+      birth_timestamp: BigInt(Date.now() - 18 * 365 * 24 * 60 * 60 * 1000), // Exactly 18 years ago
     };
 
     await counterApi.updateCredentialSubject(legalAgeCredential);

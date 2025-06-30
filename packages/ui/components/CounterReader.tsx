@@ -87,7 +87,7 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
       await (counterApi as any).updateCredentialSubject(credentialData);
 
       // Mark this contract as verified
-      setVerifiedContracts(prev => new Set([...prev, contractAddress]));
+      setVerifiedContracts((prev) => new Set([...prev, contractAddress]));
       setShowAgeVerification(false);
 
       console.log('Successfully updated credential subject for contract:', contractAddress);

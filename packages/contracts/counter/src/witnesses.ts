@@ -18,7 +18,17 @@ import {
 } from "./managed/counter/contract/index.cjs";
 
 import { WitnessContext } from "@midnight-ntwrk/compact-runtime";
-// eslint-disable-next-line prettier/prettier
+
+// Declare console and TextDecoder for browser environment
+declare const console: {
+  log: (..._data: any[]) => void;
+};
+declare const TextDecoder: {
+  new (encoding?: string): {
+    decode(_input?: Uint8Array): string;
+  };
+};
+
 export type Contract<T, W extends Witnesses<T> = Witnesses<T>> = ContractType<
   T,
   W
@@ -49,17 +59,94 @@ export const witnesses = {
     CounterPrivateState,
     CredentialSubject
   ] => {
+    // Log private state for debugging
+    console.log("=== get_identity witness called ===");
+    console.log("Private state:", privateState);
+
     if (privateState.CredentialSubject) {
+      const credential = privateState.CredentialSubject;
+      console.log("CredentialSubject found:");
+      console.log("  ID (as array):", Array.from(credential.id));
+      console.log(
+        "  ID (as hex):",
+        Array.from(credential.id)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("")
+      );
+      console.log(
+        "  ID (non-zero bytes):",
+        Array.from(credential.id).filter((b) => b !== 0)
+      );
+
+      console.log(
+        "  First name (as array):",
+        Array.from(credential.first_name)
+      );
+      const firstNameString = new TextDecoder()
+        .decode(credential.first_name)
+        .replace(/\0/g, "");
+      console.log("  First name (as string):", `"${firstNameString}"`);
+      console.log(
+        "  First name (non-zero bytes):",
+        Array.from(credential.first_name).filter((b) => b !== 0)
+      );
+
+      console.log("  Last name (as array):", Array.from(credential.last_name));
+      const lastNameString = new TextDecoder()
+        .decode(credential.last_name)
+        .replace(/\0/g, "");
+      console.log("  Last name (as string):", `"${lastNameString}"`);
+      console.log(
+        "  Last name (non-zero bytes):",
+        Array.from(credential.last_name).filter((b) => b !== 0)
+      );
+
+      console.log("  Birth timestamp:", credential.birth_timestamp.toString());
+      console.log(
+        "  Birth timestamp (as number):",
+        Number(credential.birth_timestamp)
+      );
+      console.log(
+        "  Birth timestamp (as date):",
+        new Date(Number(credential.birth_timestamp)).toISOString()
+      );
+
+      // Check if any field is empty/default
+      const isIdEmpty = Array.from(credential.id).every((b) => b === 0);
+      const isFirstNameEmpty = Array.from(credential.first_name).every(
+        (b) => b === 0
+      );
+      const isLastNameEmpty = Array.from(credential.last_name).every(
+        (b) => b === 0
+      );
+      const isBirthTimestampEmpty = credential.birth_timestamp === 0n;
+
+      console.log("  Validation checks:");
+      console.log("    ID is empty (all zeros):", isIdEmpty);
+      console.log("    First name is empty (all zeros):", isFirstNameEmpty);
+      console.log("    Last name is empty (all zeros):", isLastNameEmpty);
+      console.log("    Birth timestamp is zero:", isBirthTimestampEmpty);
+
       return [privateState, privateState.CredentialSubject];
-    } else throw new Error("No identity found");
+    } else {
+      console.log("No CredentialSubject found in private state");
+      throw new Error("No identity found");
+    }
   },
   get_current_time: ({
     privateState
   }: WitnessContext<any, CounterPrivateState>): [
     CounterPrivateState,
     bigint
-  ] => [
-    privateState,
-    BigInt(Date.now()) // Returns the current time in milliseconds.
-  ]
+  ] => {
+    const currentTime = BigInt(Date.now());
+    console.log("=== get_current_time witness called ===");
+    console.log("Current time (ms):", currentTime.toString());
+    console.log(
+      "Current time (date):",
+      new Date(Number(currentTime)).toISOString()
+    );
+
+    return [privateState, currentTime];
+  }
 };

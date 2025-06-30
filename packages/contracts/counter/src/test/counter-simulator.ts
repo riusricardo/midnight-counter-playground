@@ -20,7 +20,8 @@ import {
 import {
   Contract,
   type Ledger,
-  ledger
+  ledger,
+  CredentialSubject
 } from "../managed/counter/contract/index.cjs";
 import { type CounterPrivateState, witnesses } from "../witnesses.js";
 
@@ -56,6 +57,14 @@ export class CounterSimulator {
 
   public getPrivateState(): CounterPrivateState {
     return this.circuitContext.currentPrivateState;
+  }
+
+  public setCredentialSubject(credentialSubject: CredentialSubject): void {
+    // Update the private state to include the credential
+    this.circuitContext.currentPrivateState = {
+      ...this.circuitContext.currentPrivateState,
+      CredentialSubject: credentialSubject
+    };
   }
 
   public increment(): Ledger {

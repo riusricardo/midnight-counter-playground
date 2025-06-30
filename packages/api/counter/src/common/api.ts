@@ -323,15 +323,27 @@ export class CounterAPI implements DeployedCounterAPI {
         throw new Error('Credential subject cannot be null or undefined');
       }
 
-      if (!credentialSubject.id || !(credentialSubject.id instanceof Uint8Array) || credentialSubject.id.length !== 32) {
+      if (
+        !credentialSubject.id ||
+        !(credentialSubject.id instanceof Uint8Array) ||
+        credentialSubject.id.length !== 32
+      ) {
         throw new Error('Credential subject ID must be a Uint8Array of length 32');
       }
 
-      if (!credentialSubject.first_name || !(credentialSubject.first_name instanceof Uint8Array) || credentialSubject.first_name.length !== 32) {
+      if (
+        !credentialSubject.first_name ||
+        !(credentialSubject.first_name instanceof Uint8Array) ||
+        credentialSubject.first_name.length !== 32
+      ) {
         throw new Error('Credential subject first_name must be a Uint8Array of length 32');
       }
 
-      if (!credentialSubject.last_name || !(credentialSubject.last_name instanceof Uint8Array) || credentialSubject.last_name.length !== 32) {
+      if (
+        !credentialSubject.last_name ||
+        !(credentialSubject.last_name instanceof Uint8Array) ||
+        credentialSubject.last_name.length !== 32
+      ) {
         throw new Error('Credential subject last_name must be a Uint8Array of length 32');
       }
 
@@ -378,15 +390,18 @@ export class CounterAPI implements DeployedCounterAPI {
       const verificationState = await this.providers.privateStateProvider.get('counterPrivateState');
       console.log('Verification read after save:', {
         hasCredentialSubject: !!verificationState?.CredentialSubject,
-        credentialDataPresent: !!verificationState?.CredentialSubject && 
-          !!verificationState.CredentialSubject.id && 
-          !!verificationState.CredentialSubject.first_name && 
-          !!verificationState.CredentialSubject.last_name && 
+        credentialDataPresent:
+          !!verificationState?.CredentialSubject &&
+          !!verificationState.CredentialSubject.id &&
+          !!verificationState.CredentialSubject.first_name &&
+          !!verificationState.CredentialSubject.last_name &&
           typeof verificationState.CredentialSubject.birth_timestamp === 'bigint',
       });
     } catch (error) {
       console.error('Error updating credential subject:', error);
-      throw new Error(`Failed to update credential information: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to update credential information: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 

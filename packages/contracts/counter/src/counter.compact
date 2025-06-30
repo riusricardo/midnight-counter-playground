@@ -49,24 +49,24 @@ export circuit verify_identity(): Boolean {
 
   if(exists) {
     // If the identity already exists, check if the hash matches
-     assert(credentialHashes.lookup(disclose(identity.id)) == subjectHash, "Credential subject hash mismatch");
+     assert(credentialHashes.lookup(disclose(identity.id)) == disclose(subjectHash), "Credential subject hash mismatch");
   } else {
      credentialHashes.insert(disclose(identity.id), disclose(subjectHash));
   }
 
   // Temporary solution for timestamp. Timestamps aren't inherently trusted so a better pattern needs to be applied.
-  // This is a workaround to ensure the user is over 18 years old.
-  const current_time = get_current_time();
-  assert((current_time - identity.birth_timestamp) > 18 * 365 * 24 * 60 * 60 * 1000, "User is not over 18 years old");
-  // If all checks pass, the identity is valid
-  return true;
+  // This is a workaround to ensure the user is over 21 years old.
+  const current_time = disclose(get_current_time());
+  // Returns: true if the user is over 21 years old, false otherwise.
+  return disclose((current_time - identity.birth_timestamp) > 21 * 365 * 24 * 60 * 60 * 1000);
 }
 
 // transition function changing public state
 export circuit increment(): [] {
 
-  assert(verify_identity(), "Identity verification failed");
-
-  round.increment(1);
+  if (verify_identity()) {
+    // Increment the round if the identity is verified
+    round.increment(1);
+  } 
 }
 
