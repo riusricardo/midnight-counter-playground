@@ -78,14 +78,14 @@ const CounterAppContent: React.FC<{ logger: Logger }> = () => {
             ) : (
               <>
                 {tabValue === 0 && counterProviders && (
-                  <CounterApplication 
-                    providers={counterProviders} 
+                  <CounterApplication
+                    providers={counterProviders}
                     walletPublicKey={walletState.walletAPI?.coinPublicKey}
                   />
                 )}
                 {tabValue === 1 && counterProviders && (
-                  <CounterReaderApplication 
-                    providers={counterProviders} 
+                  <CounterReaderApplication
+                    providers={counterProviders}
                     walletPublicKey={walletState.walletAPI?.coinPublicKey}
                   />
                 )}

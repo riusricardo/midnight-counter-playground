@@ -20,14 +20,14 @@ import {
 import { WitnessContext } from "@midnight-ntwrk/compact-runtime";
 
 // Declare console and TextDecoder for browser environment
-declare const console: {
-  log: (..._data: any[]) => void;
-};
-declare const TextDecoder: {
-  new (encoding?: string): {
-    decode(_input?: Uint8Array): string;
-  };
-};
+// declare const console: {
+//   log: (..._data: any[]) => void;
+// };
+// declare const TextDecoder: {
+//   new (encoding?: string): {
+//     decode(_input?: Uint8Array): string;
+//   };
+// };
 
 export type Contract<T, W extends Witnesses<T> = Witnesses<T>> = ContractType<
   T,

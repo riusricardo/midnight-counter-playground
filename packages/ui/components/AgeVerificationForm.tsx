@@ -31,7 +31,7 @@ interface AgeVerificationFormProps {
 const hexToUint8Array = (hexString: string, length: number = 32): Uint8Array => {
   // Remove '0x' prefix if present
   const cleanHex = hexString.startsWith('0x') ? hexString.slice(2) : hexString;
-  
+
   // Convert hex to bytes
   const bytes = new Uint8Array(Math.ceil(cleanHex.length / 2));
   for (let i = 0; i < cleanHex.length; i += 2) {

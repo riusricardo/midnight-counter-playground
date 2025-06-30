@@ -302,8 +302,8 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
   );
 };
 
-export const CounterReaderDisplay: React.FC<{ 
-  walletPublicKey?: string; 
+export const CounterReaderDisplay: React.FC<{
+  walletPublicKey?: string;
 }> = ({ walletPublicKey }) => {
   const {
     counterValue,
@@ -439,10 +439,10 @@ export const CounterReaderDisplay: React.FC<{
             >
               ×
             </button>
-            <AgeVerificationForm 
-              onSubmit={handleAgeVerification} 
-              isLoading={isVerificationLoading} 
-              error={error} 
+            <AgeVerificationForm
+              onSubmit={handleAgeVerification}
+              isLoading={isVerificationLoading}
+              error={error}
               walletPublicKey={walletPublicKey}
             />
           </div>

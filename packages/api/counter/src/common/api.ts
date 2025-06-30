@@ -412,7 +412,17 @@ export class CounterAPI implements DeployedCounterAPI {
   async getCredentialSubject(): Promise<any | null> {
     try {
       const privateState = await this.providers.privateStateProvider.get('counterPrivateState');
-      return privateState?.CredentialSubject ?? null;
+      const credentialSubject = privateState?.CredentialSubject;
+      
+      // Return null if no credential subject or if it's the default empty one
+      if (!credentialSubject) return null;
+      
+      // Check if this is a default/empty credential subject (all zeros)
+      const isDefaultCredential = 
+        credentialSubject.birth_timestamp === 0n ||
+        (credentialSubject.id && credentialSubject.id.every((byte: number) => byte === 0));
+      
+      return isDefaultCredential ? null : credentialSubject;
     } catch (error) {
       console.error('Error getting credential subject:', error);
       return null;
@@ -427,11 +437,18 @@ export class CounterAPI implements DeployedCounterAPI {
     const credentialSubject = await this.getCredentialSubject();
     if (!credentialSubject) return false;
 
-    // Check if the user is at least 18 years old
-    const currentTime = BigInt(Date.now());
-    const eighteenYearsInMs = BigInt(18 * 365 * 24 * 60 * 60 * 1000);
+    // Check if this is a default/empty credential subject (all zeros)
+    const isDefaultCredential = 
+      credentialSubject.birth_timestamp === 0n ||
+      (credentialSubject.id && credentialSubject.id.every((byte: number) => byte === 0));
+    
+    if (isDefaultCredential) return false;
 
-    return currentTime - credentialSubject.birth_timestamp >= eighteenYearsInMs;
+    // Check if the user is at least 21 years old (to match smart contract behavior)
+    const currentTime = BigInt(Date.now());
+    const twentyOneYearsInMs = BigInt(21 * 365 * 24 * 60 * 60 * 1000);
+
+    return currentTime - credentialSubject.birth_timestamp >= twentyOneYearsInMs;
   }
 
   /**

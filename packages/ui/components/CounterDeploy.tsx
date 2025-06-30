@@ -229,7 +229,7 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
   );
 };
 
-export const CounterDisplay: React.FC<{ 
+export const CounterDisplay: React.FC<{
   contractAddress: ContractAddress;
   walletPublicKey?: string;
 }> = ({ contractAddress, walletPublicKey }) => {
@@ -325,10 +325,10 @@ export const CounterDisplay: React.FC<{
             >
               ×
             </button>
-            <AgeVerificationForm 
-              onSubmit={handleAgeVerification} 
-              isLoading={isVerificationLoading} 
-              error={error} 
+            <AgeVerificationForm
+              onSubmit={handleAgeVerification}
+              isLoading={isVerificationLoading}
+              error={error}
               walletPublicKey={walletPublicKey}
             />
           </div>
