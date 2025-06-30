@@ -351,23 +351,8 @@ export class CounterAPI implements DeployedCounterAPI {
         throw new Error('Credential subject birth_timestamp must be a bigint');
       }
 
-      console.log('Credential subject validation passed:', {
-        id_length: credentialSubject.id.length,
-        first_name_length: credentialSubject.first_name.length,
-        last_name_length: credentialSubject.last_name.length,
-        birth_timestamp_type: typeof credentialSubject.birth_timestamp,
-        birth_timestamp_value: credentialSubject.birth_timestamp.toString(),
-        birth_timestamp_valid: credentialSubject.birth_timestamp > 0n,
-      });
-
       // Get current private state
       const currentState = await this.providers.privateStateProvider.get('counterPrivateState');
-      console.log('Current private state before update:', {
-        hasState: !!currentState,
-        hasValue: typeof currentState?.value === 'number',
-        hasCredentialSubject: !!currentState?.CredentialSubject,
-        value: currentState?.value ?? 0,
-      });
 
       // Create updated state with new credential subject
       const updatedState: CounterPrivateState = {
@@ -376,27 +361,9 @@ export class CounterAPI implements DeployedCounterAPI {
         CredentialSubject: credentialSubject,
       };
 
-      console.log('Updated state to be saved:', {
-        value: updatedState.value,
-        hasCredentialSubject: !!updatedState.CredentialSubject,
-        credentialSubjectKeys: updatedState.CredentialSubject ? Object.keys(updatedState.CredentialSubject) : [],
-      });
-
       // Save updated state
       await this.providers.privateStateProvider.set('counterPrivateState', updatedState);
       console.log('Updated private state with credential subject successfully');
-
-      // Verify the data was saved correctly by reading it back
-      const verificationState = await this.providers.privateStateProvider.get('counterPrivateState');
-      console.log('Verification read after save:', {
-        hasCredentialSubject: !!verificationState?.CredentialSubject,
-        credentialDataPresent:
-          !!verificationState?.CredentialSubject &&
-          !!verificationState.CredentialSubject.id &&
-          !!verificationState.CredentialSubject.first_name &&
-          !!verificationState.CredentialSubject.last_name &&
-          typeof verificationState.CredentialSubject.birth_timestamp === 'bigint',
-      });
     } catch (error) {
       console.error('Error updating credential subject:', error);
       throw new Error(
@@ -413,15 +380,15 @@ export class CounterAPI implements DeployedCounterAPI {
     try {
       const privateState = await this.providers.privateStateProvider.get('counterPrivateState');
       const credentialSubject = privateState?.CredentialSubject;
-      
+
       // Return null if no credential subject or if it's the default empty one
       if (!credentialSubject) return null;
-      
+
       // Check if this is a default/empty credential subject (all zeros)
-      const isDefaultCredential = 
+      const isDefaultCredential =
         credentialSubject.birth_timestamp === 0n ||
         (credentialSubject.id && credentialSubject.id.every((byte: number) => byte === 0));
-      
+
       return isDefaultCredential ? null : credentialSubject;
     } catch (error) {
       console.error('Error getting credential subject:', error);
@@ -438,10 +405,10 @@ export class CounterAPI implements DeployedCounterAPI {
     if (!credentialSubject) return false;
 
     // Check if this is a default/empty credential subject (all zeros)
-    const isDefaultCredential = 
+    const isDefaultCredential =
       credentialSubject.birth_timestamp === 0n ||
       (credentialSubject.id && credentialSubject.id.every((byte: number) => byte === 0));
-    
+
     if (isDefaultCredential) return false;
 
     // Check if the user is at least 21 years old (to match smart contract behavior)

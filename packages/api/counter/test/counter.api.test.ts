@@ -98,11 +98,11 @@ describe('API', () => {
   it('should store and retrieve credential subject in CounterPrivateState [@slow]', async () => {
     // Clear any existing private state to ensure clean test
     await providers.privateStateProvider.clear();
-    
+
     // Deploy a new contract for this test
     const counterApi = await CounterAPI.deploy(providers, { value: 0 });
     expect(counterApi).not.toBeNull();
-    
+
     // Create test credential data matching the CredentialSubject structure
     const testCredentialSubject = {
       id: new Uint8Array(32).fill(1), // Test ID
@@ -157,7 +157,7 @@ describe('API', () => {
     // Clear any existing private state to ensure clean test
     await providers.privateStateProvider.clear();
 
-        // Deploy a new contract for this test
+    // Deploy a new contract for this test
     const counterApi = await CounterAPI.deploy(providers, { value: 0 });
 
     // Test with under-age user (20 years old - under 21)
@@ -201,7 +201,7 @@ describe('API', () => {
     };
 
     await counterApi.updateCredentialSubject(firstUserCredential);
-    
+
     // Get initial counter value
     const initialCounter = await CounterAPI.getCounterInfo(counterApi);
     expect(initialCounter.counterValue).toEqual(BigInt(0));
@@ -220,7 +220,7 @@ describe('API', () => {
     };
 
     await counterApi.updateCredentialSubject(secondUserCredential);
-    
+
     // Second user should also be able to increment
     await CounterAPI.incrementWithTxInfo(counterApi);
     const counterAfterSecond = await CounterAPI.getCounterInfo(counterApi);
@@ -249,7 +249,7 @@ describe('API', () => {
     };
 
     await counterApi.updateCredentialSubject(underageCredential);
-    
+
     // Verify user is not verified due to age
     const underageVerification = await counterApi.isUserVerified();
     expect(underageVerification).toBe(false);
@@ -261,7 +261,7 @@ describe('API', () => {
     // Underage user tries to increment - based on smart contract behavior,
     // this should succeed but not increment the counter (round stays 0)
     await CounterAPI.incrementWithTxInfo(counterApi);
-    
+
     // Counter should still be 0 since user is underage
     const counterAfterUnderage = await CounterAPI.getCounterInfo(counterApi);
     expect(counterAfterUnderage.counterValue).toEqual(BigInt(0));
@@ -279,7 +279,7 @@ describe('API', () => {
 
     // This should fail when trying to increment due to credential hash mismatch
     await expect(CounterAPI.incrementWithTxInfo(counterApi)).rejects.toThrow();
-    
+
     // Counter should still be 0
     const finalCounter = await CounterAPI.getCounterInfo(counterApi);
     expect(finalCounter.counterValue).toEqual(BigInt(0));
@@ -301,7 +301,7 @@ describe('API', () => {
     };
 
     await counterApi.updateCredentialSubject(userCredential);
-    
+
     // Verify user is verified
     const verification = await counterApi.isUserVerified();
     expect(verification).toBe(true);
@@ -313,7 +313,7 @@ describe('API', () => {
 
     // Same user sets same credentials again (simulating returning user)
     await counterApi.updateCredentialSubject(userCredential);
-    
+
     // Second increment with same credentials should work
     await CounterAPI.incrementWithTxInfo(counterApi);
     const counterAfterSecond = await CounterAPI.getCounterInfo(counterApi);

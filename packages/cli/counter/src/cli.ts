@@ -28,6 +28,7 @@ import {
 import { setLogger, CounterAPI } from '@repo/counter-api/common-api';
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import { contractConfig } from '@repo/counter-api';
+import type { CredentialSubject } from '@midnight-ntwrk/counter-contract';
 
 let logger: Logger;
 
@@ -48,12 +49,173 @@ const MAIN_LOOP_QUESTION = `
 You can do one of the following:
   1. Increment
   2. Display current counter value
-  3. Exit
+  3. Set/Update credential information
+  4. Check verification status
+  5. Exit
 Which would you like to do? `;
 
-const join = async (providers: CounterProviders, rli: Interface): Promise<CounterAPI> => {
-  const contractAddress = await rli.question('What is the contract address (in hex)? ');
-  return await CounterAPI.connect(providers, contractAddress);
+const join = async (providers: CounterProviders, rli: Interface): Promise<CounterAPI | null> => {
+  try {
+    const contractAddress = await rli.question('What is the contract address (in hex)? ');
+    return await CounterAPI.connect(providers, contractAddress);
+  } catch (error) {
+    logger.error(`Failed to connect to contract: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+};
+
+// Helper function to convert string to Uint8Array with padding
+const stringToUint8Array = (str: string, length: number = 32): Uint8Array => {
+  const utf8Bytes = Buffer.from(str, 'utf8');
+
+  if (utf8Bytes.length > length) {
+    throw new Error(`String "${str}" is too long. Maximum length is ${length} bytes.`);
+  }
+
+  const paddedArray = new Uint8Array(length);
+  paddedArray.set(utf8Bytes);
+  return paddedArray;
+};
+
+// Helper function to convert hex string to Uint8Array with padding
+const hexToUint8Array = (hexString: string, length: number = 32): Uint8Array => {
+  // Remove '0x' prefix if present
+  const cleanHex = hexString.startsWith('0x') ? hexString.slice(2) : hexString;
+
+  // Convert hex to bytes
+  const bytes = new Uint8Array(Math.ceil(cleanHex.length / 2));
+  for (let i = 0; i < cleanHex.length; i += 2) {
+    bytes[i / 2] = parseInt(cleanHex.substr(i, 2), 16);
+  }
+
+  // Pad or truncate to the desired length
+  const paddedArray = new Uint8Array(length);
+  paddedArray.set(bytes.slice(0, length));
+  return paddedArray;
+};
+
+// Helper function to get wallet public key from providers
+const getWalletPublicKey = async (providers: CounterProviders): Promise<string> => {
+  try {
+    // Access the coin public key from the wallet provider
+    const coinPublicKey = providers.walletProvider.coinPublicKey;
+
+    // Handle string case
+    if (typeof coinPublicKey === 'string') {
+      return coinPublicKey;
+    }
+
+    // Handle object case - use type assertion to bypass strict typing
+    if (coinPublicKey && typeof coinPublicKey === 'object') {
+      // Try to convert to string using various methods
+      try {
+        // Type assertion with proper type checking
+        const publicKeyObj = coinPublicKey as { toString?: () => string };
+        if (typeof publicKeyObj.toString === 'function') {
+          return String(publicKeyObj.toString());
+        }
+        // If toString fails, try JSON serialization
+        return JSON.stringify(coinPublicKey);
+      } catch {
+        // If toString fails, try JSON serialization
+        return JSON.stringify(coinPublicKey);
+      }
+    }
+
+    // Fallback: use a deterministic approach based on wallet address
+    return '0000000000000000000000000000000000000000000000000000000000000000';
+  } catch {
+    logger.warn('Could not retrieve wallet public key, using fallback method');
+    // Fallback: use a deterministic approach based on wallet address
+    return '0000000000000000000000000000000000000000000000000000000000000000';
+  }
+};
+
+const setCredentials = async (counterApi: CounterAPI, providers: CounterProviders, rli: Interface): Promise<void> => {
+  try {
+    logger.info('\n=== Setting Credential Information ===');
+    logger.info('Note: You must be at least 21 years old to increment the counter.');
+
+    // Get user input for credentials
+    const firstName = await rli.question('Enter your first name: ');
+    const lastName = await rli.question('Enter your last name: ');
+    const birthYear = await rli.question('Enter your birth year (YYYY): ');
+    const birthMonth = await rli.question('Enter your birth month (1-12): ');
+    const birthDay = await rli.question('Enter your birth day (1-31): ');
+
+    // Validate birth date
+    const birthDate = new Date(parseInt(birthYear), parseInt(birthMonth) - 1, parseInt(birthDay));
+    if (isNaN(birthDate.getTime())) {
+      logger.error('Invalid birth date provided');
+      return;
+    }
+
+    const birthTimestamp = BigInt(birthDate.getTime());
+    const currentTime = BigInt(Date.now());
+    const twentyOneYearsInMs = BigInt(21 * 365 * 24 * 60 * 60 * 1000);
+
+    if (currentTime - birthTimestamp < twentyOneYearsInMs) {
+      logger.warn('Warning: You must be at least 21 years old to increment the counter.');
+    }
+
+    // Get wallet public key for credential ID
+    const walletPublicKey = await getWalletPublicKey(providers);
+
+    // Create credential subject with proper formatting
+    const credentialSubject = {
+      id: hexToUint8Array(walletPublicKey, 32),
+      first_name: stringToUint8Array(firstName, 32),
+      last_name: stringToUint8Array(lastName, 32),
+      birth_timestamp: birthTimestamp,
+    };
+
+    logger.info('Updating credential information...');
+    await counterApi.updateCredentialSubject(credentialSubject);
+    logger.info('Credential information updated successfully!');
+
+    // Check verification status
+    const isVerified = await counterApi.isUserVerified();
+    if (isVerified) {
+      logger.info('✅ You are verified and can increment the counter.');
+    } else {
+      logger.warn('❌ You are not verified. Make sure you are at least 21 years old.');
+    }
+  } catch (error) {
+    logger.error(`Failed to set credentials: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+const checkVerificationStatus = async (counterApi: CounterAPI): Promise<void> => {
+  try {
+    const isVerified = await counterApi.isUserVerified();
+    const credentialSubject = (await counterApi.getCredentialSubject()) as CredentialSubject | null;
+
+    if (credentialSubject) {
+      const firstName = Buffer.from(credentialSubject.first_name).toString('utf8').replace(/\0/g, '');
+      const lastName = Buffer.from(credentialSubject.last_name).toString('utf8').replace(/\0/g, '');
+      const birthDate = new Date(Number(credentialSubject.birth_timestamp));
+
+      logger.info('\n=== Current Credential Information ===');
+      logger.info(`Name: ${firstName} ${lastName}`);
+      logger.info(`Birth Date: ${birthDate.toDateString()}`);
+      logger.info(`Verification Status: ${isVerified ? '✅ Verified' : '❌ Not Verified'}`);
+
+      if (!isVerified) {
+        const currentTime = BigInt(Date.now());
+        const ageInMs = currentTime - credentialSubject.birth_timestamp;
+        const ageInYears = Number(ageInMs / BigInt(365 * 24 * 60 * 60 * 1000));
+
+        logger.info(`Current Age: ~${ageInYears} years`);
+        logger.info('Note: You must be at least 21 years old to increment the counter.');
+      }
+    } else {
+      logger.info('\n=== Verification Status ===');
+      logger.info('❌ No credential information found.');
+      logger.info('Please set your credential information first (option 3).');
+    }
+  } catch (error) {
+    logger.error(`Failed to check verification status: ${error instanceof Error ? error.message : String(error)}`);
+  }
 };
 
 const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promise<CounterAPI | null> => {
@@ -62,7 +224,12 @@ const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promis
     const choice = await rli.question(DEPLOY_OR_JOIN_QUESTION);
     switch (choice) {
       case '1':
-        return await CounterAPI.deploy(providers, { value: 0 });
+        try {
+          return await CounterAPI.deploy(providers, { value: 0 });
+        } catch (error) {
+          logger.error(`Failed to deploy: ${error instanceof Error ? error.message : String(error)}`);
+          return null;
+        }
       case '2':
         return await join(providers, rli);
       case '3':
@@ -79,17 +246,61 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
   if (counterApi === null) {
     return;
   }
+
+  // Show initial verification status
+  try {
+    await checkVerificationStatus(counterApi);
+  } catch {
+    logger.debug('Could not check initial verification status');
+  }
+
   while (true) {
     // while loop for CLI menu
     const choice = await rli.question(MAIN_LOOP_QUESTION);
     switch (choice) {
       case '1':
-        await CounterAPI.incrementWithTxInfo(counterApi);
+        try {
+          // Check if user is verified before attempting increment
+          const isVerified = await counterApi.isUserVerified();
+          if (!isVerified) {
+            logger.warn('❌ Cannot increment: You must set valid credentials first (option 3)');
+            logger.warn('You must be at least 21 years old to increment the counter.');
+            break;
+          }
+
+          await CounterAPI.incrementWithTxInfo(counterApi);
+          logger.info('✅ Counter incremented successfully!');
+        } catch (error) {
+          if (error instanceof Error) {
+            if (error.message.includes('Identity ID cannot be empty')) {
+              logger.error('❌ Please set your credential information first (option 3)');
+            } else if (error.message.includes('Credential subject hash mismatch')) {
+              logger.error('❌ Credential verification failed. Please check your credential information.');
+            } else {
+              logger.error(`❌ Failed to increment: ${error.message}`);
+            }
+          } else {
+            logger.error('❌ Failed to increment counter');
+          }
+        }
         break;
       case '2':
-        await CounterAPI.getCounterInfo(counterApi);
+        try {
+          const counterInfo = await CounterAPI.getCounterInfo(counterApi);
+          logger.info(`\n=== Counter Information ===`);
+          logger.info(`Contract Address: ${counterInfo.contractAddress}`);
+          logger.info(`Current Value: ${counterInfo.counterValue}`);
+        } catch (error) {
+          logger.error(`Failed to get counter info: ${error instanceof Error ? error.message : String(error)}`);
+        }
         break;
       case '3':
+        await setCredentials(counterApi, providers, rli);
+        break;
+      case '4':
+        await checkVerificationStatus(counterApi);
+        break;
+      case '5':
         logger.info('Exiting...');
         return;
       default:
@@ -98,9 +309,14 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
   }
 };
 
-const buildWalletFromSeed = async (config: Config, rli: Interface): Promise<Wallet & Resource> => {
-  const seed = await rli.question('Enter your wallet seed: ');
-  return await buildWalletAndWaitForFunds(config, seed, '');
+const buildWalletFromSeed = async (config: Config, rli: Interface): Promise<(Wallet & Resource) | null> => {
+  try {
+    const seed = await rli.question('Enter your wallet seed: ');
+    return await buildWalletAndWaitForFunds(config, seed, '');
+  } catch (error) {
+    logger.error(`Failed to build wallet from seed: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
 };
 
 const WALLET_LOOP_QUESTION = `
@@ -112,14 +328,24 @@ Which would you like to do? `;
 
 const buildWallet = async (config: Config, rli: Interface): Promise<(Wallet & Resource) | null> => {
   if (config instanceof StandaloneConfig) {
-    return await buildWalletAndWaitForFunds(config, GENESIS_MINT_WALLET_SEED, '');
+    try {
+      return await buildWalletAndWaitForFunds(config, GENESIS_MINT_WALLET_SEED, '');
+    } catch (error) {
+      logger.error(`Failed to build standalone wallet: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
+    }
   }
   while (true) {
     // while loop for CLI menu
     const choice = await rli.question(WALLET_LOOP_QUESTION);
     switch (choice) {
       case '1':
-        return await buildFreshWallet(config);
+        try {
+          return await buildFreshWallet(config);
+        } catch (error) {
+          logger.error(`Failed to build fresh wallet: ${error instanceof Error ? error.message : String(error)}`);
+          return null;
+        }
       case '2':
         return await buildWalletFromSeed(config, rli);
       case '3':
