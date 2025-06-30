@@ -302,7 +302,9 @@ export const CounterReaderProvider: React.FC<CounterReaderProviderProps> = ({
   );
 };
 
-export const CounterReaderDisplay: React.FC = () => {
+export const CounterReaderDisplay: React.FC<{ 
+  walletPublicKey?: string; 
+}> = ({ walletPublicKey }) => {
   const {
     counterValue,
     isLoading,
@@ -437,7 +439,12 @@ export const CounterReaderDisplay: React.FC = () => {
             >
               ×
             </button>
-            <AgeVerificationForm onSubmit={handleAgeVerification} isLoading={isVerificationLoading} error={error} />
+            <AgeVerificationForm 
+              onSubmit={handleAgeVerification} 
+              isLoading={isVerificationLoading} 
+              error={error} 
+              walletPublicKey={walletPublicKey}
+            />
           </div>
         </div>
       )}
@@ -659,7 +666,8 @@ function formatContractAddress(address: string, groupSize = 4): string {
 export const CounterReaderApplication: React.FC<{
   providers: CounterProviders;
   initialAddress?: ContractAddress;
-}> = ({ providers, initialAddress }) => {
+  walletPublicKey?: string;
+}> = ({ providers, initialAddress, walletPublicKey }) => {
   const [contractAddress, setContractAddress] = useState<ContractAddress | undefined>(initialAddress);
 
   // Show loading state if providers are not ready
@@ -727,7 +735,7 @@ export const CounterReaderApplication: React.FC<{
       </div>
 
       <CounterReaderProvider contractAddress={contractAddress} providers={providers}>
-        <CounterReaderDisplay />
+        <CounterReaderDisplay walletPublicKey={walletPublicKey} />
       </CounterReaderProvider>
     </div>
   );

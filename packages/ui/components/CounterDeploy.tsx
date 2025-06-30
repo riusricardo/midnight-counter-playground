@@ -229,7 +229,10 @@ export const CounterProvider: React.FC<CounterProviderProps> = ({ contractAddres
   );
 };
 
-export const CounterDisplay: React.FC<{ contractAddress: ContractAddress }> = ({ contractAddress }) => {
+export const CounterDisplay: React.FC<{ 
+  contractAddress: ContractAddress;
+  walletPublicKey?: string;
+}> = ({ contractAddress, walletPublicKey }) => {
   const {
     counterValue,
     isLoading,
@@ -322,7 +325,12 @@ export const CounterDisplay: React.FC<{ contractAddress: ContractAddress }> = ({
             >
               ×
             </button>
-            <AgeVerificationForm onSubmit={handleAgeVerification} isLoading={isVerificationLoading} error={error} />
+            <AgeVerificationForm 
+              onSubmit={handleAgeVerification} 
+              isLoading={isVerificationLoading} 
+              error={error} 
+              walletPublicKey={walletPublicKey}
+            />
           </div>
         </div>
       )}
@@ -558,7 +566,8 @@ export const DeployCounterButton: React.FC<{
 export const CounterApplication: React.FC<{
   contractAddress?: ContractAddress;
   providers: CounterProviders;
-}> = ({ contractAddress, providers }) => {
+  walletPublicKey?: string;
+}> = ({ contractAddress, providers, walletPublicKey }) => {
   const [deployedAddress, setDeployedAddress] = useState<ContractAddress | undefined>(contractAddress);
 
   // Show loading state if providers are not ready
@@ -576,7 +585,7 @@ export const CounterApplication: React.FC<{
 
   return (
     <CounterProvider contractAddress={deployedAddress} providers={providers}>
-      <CounterDisplay contractAddress={deployedAddress} />
+      <CounterDisplay contractAddress={deployedAddress} walletPublicKey={walletPublicKey} />
     </CounterProvider>
   );
 };

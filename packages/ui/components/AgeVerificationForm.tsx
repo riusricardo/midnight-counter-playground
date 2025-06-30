@@ -22,9 +22,27 @@ export interface CredentialSubjectData {
 
 interface AgeVerificationFormProps {
   onSubmit: (data: CredentialSubjectData) => Promise<void>;
+  walletPublicKey?: string; // Add wallet public key prop
   isLoading?: boolean;
   error?: Error | null;
 }
+
+// Helper function to convert hex string to Uint8Array with padding
+const hexToUint8Array = (hexString: string, length: number = 32): Uint8Array => {
+  // Remove '0x' prefix if present
+  const cleanHex = hexString.startsWith('0x') ? hexString.slice(2) : hexString;
+  
+  // Convert hex to bytes
+  const bytes = new Uint8Array(Math.ceil(cleanHex.length / 2));
+  for (let i = 0; i < cleanHex.length; i += 2) {
+    bytes[i / 2] = parseInt(cleanHex.substr(i, 2), 16);
+  }
+
+  // Pad or truncate to the desired length
+  const paddedArray = new Uint8Array(length);
+  paddedArray.set(bytes.slice(0, length));
+  return paddedArray;
+};
 
 // Helper function to convert string to Uint8Array with padding
 const stringToUint8Array = (str: string, length: number = 32): Uint8Array => {
@@ -46,7 +64,12 @@ const generateUserIdFromName = (firstName: string, lastName: string): Uint8Array
   return stringToUint8Array(combinedName, 32);
 };
 
-export const AgeVerificationForm: React.FC<AgeVerificationFormProps> = ({ onSubmit, isLoading = false, error }) => {
+export const AgeVerificationForm: React.FC<AgeVerificationFormProps> = ({
+  onSubmit,
+  walletPublicKey,
+  isLoading = false,
+  error,
+}) => {
   const [formData, setFormData] = useState<CredentialSubjectFormData>({
     id: '',
     firstName: '',
@@ -88,8 +111,13 @@ export const AgeVerificationForm: React.FC<AgeVerificationFormProps> = ({ onSubm
     }
 
     try {
+      // Use wallet public key if available, otherwise fall back to generated ID
+      const credentialId = walletPublicKey
+        ? hexToUint8Array(walletPublicKey, 32)
+        : generateUserIdFromName(formData.firstName, formData.lastName);
+
       const credentialData: CredentialSubjectData = {
-        id: generateUserIdFromName(formData.firstName, formData.lastName),
+        id: credentialId,
         first_name: stringToUint8Array(formData.firstName, 32),
         last_name: stringToUint8Array(formData.lastName, 32),
         birth_timestamp: BigInt(formData.birthDate!.valueOf()),
