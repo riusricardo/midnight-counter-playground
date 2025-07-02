@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: Apache-2.0
 // Licensed under the Apache License, Version 2.0 (the "License");
 // You may not use this file except in compliance with the License.
@@ -25,7 +24,7 @@ export struct CredentialSubject {
 
 // Public state
 export ledger round: Counter;
-export ledger credentialHashes: Map<Bytes<32>, Bytes<32>>; // Id to hash(CredentialSubject)
+export ledger credentialHashes: Map<ZswapCoinPublicKey, Bytes<32>>; // Id to hash(CredentialSubject)
 
 witness get_identity(): CredentialSubject; // Retrieve the identity details privately
 witness get_current_time(): Uint<64>; // Retrieve the current time from the system
@@ -37,21 +36,25 @@ export pure circuit subject_hash(birthTimestamp: Uint<64>): Bytes<32> {
 
 export circuit verify_identity(): Boolean {
   const identity = get_identity();
+  // Retrieve the user's public key from the circuit context
+  const userPublicKey = ownPublicKey();
+
   // Check if the identity is valid
-  assert(identity.id != default<Bytes<32>>, "Identity ID cannot be empty");
+  assert(identity.id == userPublicKey.bytes, "Identity ID should be the ownPublicKey");
   assert(identity.first_name != default<Bytes<32>>, "First name cannot be empty");
   assert(identity.last_name != default<Bytes<32>>, "Last name cannot be empty");
   assert(identity.birth_timestamp > 0, "Birth timestamp must be a positive number");
 
   // Keep the birth date semi-private by hashing it.
   const subjectHash = subject_hash(identity.birth_timestamp);
-  const exists = credentialHashes.member(disclose(identity.id));
+  // Use CoinPublicKey for lookup, not disclosed value
+  const exists = credentialHashes.member(userPublicKey);
 
   if(exists) {
     // If the identity already exists, check if the hash matches
-     assert(credentialHashes.lookup(disclose(identity.id)) == disclose(subjectHash), "Credential subject hash mismatch");
+     assert(credentialHashes.lookup(userPublicKey) == disclose(subjectHash), "Credential subject hash mismatch");
   } else {
-     credentialHashes.insert(disclose(identity.id), disclose(subjectHash));
+     credentialHashes.insert(userPublicKey, disclose(subjectHash));
   }
 
   // Temporary solution for timestamp. Timestamps aren't inherently trusted so a better pattern needs to be applied.

@@ -185,54 +185,6 @@ describe('API', () => {
     expect(legalAgeVerification).toBe(true);
   });
 
-  it('should handle multiple different credential IDs correctly [@slow]', async () => {
-    // Clear any existing private state to ensure clean test
-    await providers.privateStateProvider.clear();
-
-    // Deploy a new contract for this test
-    const counterApi = await CounterAPI.deploy(providers, { value: 0 });
-
-    // First user with valid age
-    const firstUserCredential = {
-      id: new Uint8Array(32).fill(1),
-      first_name: new Uint8Array(32).fill(2),
-      last_name: new Uint8Array(32).fill(3),
-      birth_timestamp: BigInt(Date.now() - 25 * 365 * 24 * 60 * 60 * 1000), // 25 years old
-    };
-
-    await counterApi.updateCredentialSubject(firstUserCredential);
-
-    // Get initial counter value
-    const initialCounter = await CounterAPI.getCounterInfo(counterApi);
-    expect(initialCounter.counterValue).toEqual(BigInt(0));
-
-    // First user should be able to increment
-    await CounterAPI.incrementWithTxInfo(counterApi);
-    const counterAfterFirst = await CounterAPI.getCounterInfo(counterApi);
-    expect(counterAfterFirst.counterValue).toEqual(BigInt(1));
-
-    // Second user with different ID and valid age
-    const secondUserCredential = {
-      id: new Uint8Array(32).fill(4), // Different ID
-      first_name: new Uint8Array(32).fill(5),
-      last_name: new Uint8Array(32).fill(6),
-      birth_timestamp: BigInt(Date.now() - 30 * 365 * 24 * 60 * 60 * 1000), // 30 years old
-    };
-
-    await counterApi.updateCredentialSubject(secondUserCredential);
-
-    // Second user should also be able to increment
-    await CounterAPI.incrementWithTxInfo(counterApi);
-    const counterAfterSecond = await CounterAPI.getCounterInfo(counterApi);
-    expect(counterAfterSecond.counterValue).toEqual(BigInt(2));
-
-    // First user should still be able to increment again (existing credential)
-    await counterApi.updateCredentialSubject(firstUserCredential);
-    await CounterAPI.incrementWithTxInfo(counterApi);
-    const counterAfterThird = await CounterAPI.getCounterInfo(counterApi);
-    expect(counterAfterThird.counterValue).toEqual(BigInt(3));
-  });
-
   it('should prevent credential fraud attempts [@slow]', async () => {
     // Clear any existing private state to ensure clean test
     await providers.privateStateProvider.clear();

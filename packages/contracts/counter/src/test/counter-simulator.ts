@@ -15,7 +15,8 @@ import {
   type CircuitContext,
   QueryContext,
   sampleContractAddress,
-  constructorContext
+  constructorContext,
+  ownPublicKey
 } from "@midnight-ntwrk/compact-runtime";
 import {
   Contract,
@@ -65,6 +66,18 @@ export class CounterSimulator {
       ...this.circuitContext.currentPrivateState,
       CredentialSubject: credentialSubject
     };
+  }
+
+  public getUserPublicKey(): { bytes: Uint8Array } {
+    // Return the user's public key from the circuit context
+    const publicKey = ownPublicKey(this.circuitContext);
+
+    // If the public key is empty (all zeros), create a test public key
+    if (publicKey.bytes.every((byte) => byte === 0)) {
+      return { bytes: new Uint8Array(32).fill(0) }; // Use a test public key
+    }
+
+    return publicKey;
   }
 
   public increment(): Ledger {

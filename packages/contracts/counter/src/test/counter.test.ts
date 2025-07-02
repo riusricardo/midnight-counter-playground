@@ -16,6 +16,7 @@ import {
   NetworkId,
   setNetworkId
 } from "@midnight-ntwrk/midnight-js-network-id";
+import { type CoinPublicKey } from '@midnight-ntwrk/wallet-api';
 import { describe, it, expect } from "vitest";
 
 setNetworkId(NetworkId.Undeployed);
@@ -47,7 +48,7 @@ describe("Counter smart contract", () => {
 
     // Create a test credential subject (over 21 years old) for this test
     const testCredentialSubject = {
-      id: new Uint8Array(32).fill(1),
+      id: simulator.getUserPublicKey().bytes,
       first_name: new Uint8Array(32).fill(2),
       last_name: new Uint8Array(32).fill(3),
       birth_timestamp: BigInt(Date.now() - 25 * 365 * 24 * 60 * 60 * 1000)
@@ -67,7 +68,7 @@ describe("Counter smart contract", () => {
 
     // Create a test credential subject (over 21 years old)
     const testCredentialSubject = {
-      id: new Uint8Array(32).fill(1), // Use 1 for the ID
+      id: simulator.getUserPublicKey().bytes,
       first_name: new Uint8Array(32).fill(2), // Use 2 for first name
       last_name: new Uint8Array(32).fill(3), // Use 3 for last name
       birth_timestamp: BigInt(Date.now() - 25 * 365 * 24 * 60 * 60 * 1000) // 25 years ago
@@ -88,8 +89,8 @@ describe("Counter smart contract", () => {
     const credentialHashes = firstIncrementLedger.credentialHashes;
     expect(credentialHashes.size()).toEqual(1n);
 
-    // The key should be the credential ID - check if ID exists in the map
-    const idExists = credentialHashes.member(testCredentialSubject.id);
+    // The key should be the user's public key - check if it exists in the map
+    const idExists = credentialHashes.member(simulator.getUserPublicKey());
     expect(idExists).toBe(true);
 
     // Second increment with same credential should still work (existing credential lookup)
@@ -100,43 +101,12 @@ describe("Counter smart contract", () => {
     expect(secondIncrementLedger.credentialHashes.size()).toEqual(1n);
   });
 
-  it("handles different credential IDs correctly", () => {
-    const simulator = new CounterSimulator();
-
-    // First credential
-    const firstCredential = {
-      id: new Uint8Array(32).fill(1),
-      first_name: new Uint8Array(32).fill(2),
-      last_name: new Uint8Array(32).fill(3),
-      birth_timestamp: BigInt(Date.now() - 25 * 365 * 24 * 60 * 60 * 1000)
-    };
-
-    simulator.setCredentialSubject(firstCredential);
-    const firstIncrement = simulator.increment();
-    expect(firstIncrement.credentialHashes.size()).toEqual(1n);
-
-    // Second credential with different ID
-    const secondCredential = {
-      id: new Uint8Array(32).fill(4), // Different ID
-      first_name: new Uint8Array(32).fill(5),
-      last_name: new Uint8Array(32).fill(6),
-      birth_timestamp: BigInt(Date.now() - 30 * 365 * 24 * 60 * 60 * 1000)
-    };
-
-    simulator.setCredentialSubject(secondCredential);
-    const secondIncrement = simulator.increment();
-
-    // Should now have 2 different credentials in the map
-    expect(secondIncrement.credentialHashes.size()).toEqual(2n);
-    expect(secondIncrement.round).toEqual(2n);
-  });
-
   it("fails when same credential ID has different hash (birth timestamp)", () => {
     const simulator = new CounterSimulator();
 
     // First credential - user is over 21, so this should work
     const firstCredential = {
-      id: new Uint8Array(32).fill(1),
+      id: simulator.getUserPublicKey().bytes,
       first_name: new Uint8Array(32).fill(2),
       last_name: new Uint8Array(32).fill(3),
       birth_timestamp: BigInt(Date.now() - 25 * 365 * 24 * 60 * 60 * 1000) // 25 years ago
@@ -148,7 +118,7 @@ describe("Counter smart contract", () => {
 
     // Same credential ID but different birth timestamp should fail
     const conflictingCredential = {
-      id: new Uint8Array(32).fill(1), // Same ID as first
+      id: simulator.getUserPublicKey().bytes, // Same ID as first
       first_name: new Uint8Array(32).fill(2),
       last_name: new Uint8Array(32).fill(3),
       birth_timestamp: BigInt(Date.now() - 30 * 365 * 24 * 60 * 60 * 1000) // Different birth timestamp
@@ -167,7 +137,7 @@ describe("Counter smart contract", () => {
 
     // Scenario: User initially tries with underage credentials (17 years old)
     const underageCredential = {
-      id: new Uint8Array(32).fill(1),
+      id: simulator.getUserPublicKey().bytes,
       first_name: new Uint8Array(32).fill(2),
       last_name: new Uint8Array(32).fill(3),
       birth_timestamp: BigInt(Date.now() - 17 * 365 * 24 * 60 * 60 * 1000) // 17 years ago - underage
@@ -183,14 +153,14 @@ describe("Counter smart contract", () => {
     // (because credential storage happens before age validation in the new contract behavior)
     expect(firstAttemptLedger.credentialHashes.size()).toEqual(1n);
     const idExists = firstAttemptLedger.credentialHashes.member(
-      underageCredential.id
+      simulator.getUserPublicKey()
     );
     expect(idExists).toBe(true);
 
     // Now user realizes the limitation and tries to "update" their birth timestamp
     // to appear older, but keeps the same ID (fraudulent attempt)
     const fraudulentCredential = {
-      id: new Uint8Array(32).fill(1), // Same ID as before
+      id: simulator.getUserPublicKey().bytes, // Same ID as before
       first_name: new Uint8Array(32).fill(2),
       last_name: new Uint8Array(32).fill(3),
       birth_timestamp: BigInt(Date.now() - 25 * 365 * 24 * 60 * 60 * 1000) // Now claims to be 25 years old
