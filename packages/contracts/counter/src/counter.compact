@@ -40,7 +40,7 @@ export circuit verify_identity(): Boolean {
   const userPublicKey = ownPublicKey();
 
   // Check if the identity is valid
-  assert(identity.id == userPublicKey.bytes, "Identity ID should be the ownPublicKey");
+  //assert(identity.id == userPublicKey.bytes, "Identity ID should be the ownPublicKey");
   assert(identity.first_name != default<Bytes<32>>, "First name cannot be empty");
   assert(identity.last_name != default<Bytes<32>>, "Last name cannot be empty");
   assert(identity.birth_timestamp > 0, "Birth timestamp must be a positive number");

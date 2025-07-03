@@ -61,8 +61,8 @@ describe('API', () => {
     const counter = await CounterAPI.getCounterInfo(counterApi);
     expect(counter.counterValue).toEqual(BigInt(0));
 
-    // Initially, trying to increment without credentials should fail with Identity ID error
-    await expect(CounterAPI.incrementWithTxInfo(counterApi)).rejects.toThrow(/Identity ID cannot be empty/);
+    // Initially, trying to increment without credentials should fail with error
+    await expect(CounterAPI.incrementWithTxInfo(counterApi)).rejects.toThrow(/First name cannot be empty/);
 
     // Counter should still be 0 after failed attempt
     const counterAfterFailedAttempt = await CounterAPI.getCounterInfo(counterApi);

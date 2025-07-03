@@ -16,7 +16,6 @@ import {
   NetworkId,
   setNetworkId
 } from "@midnight-ntwrk/midnight-js-network-id";
-import { type CoinPublicKey } from '@midnight-ntwrk/wallet-api';
 import { describe, it, expect } from "vitest";
 
 setNetworkId(NetworkId.Undeployed);
