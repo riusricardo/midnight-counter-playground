@@ -1,4 +1,4 @@
-# 🌙 Midnight Counter App Template
+# 🌙 Midnight Counter App Playground
 
 <div align="center">
 
