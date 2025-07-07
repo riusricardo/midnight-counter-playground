@@ -51,7 +51,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vitest": "^3.2.0",
-    "ws": "^8.18.2"
+    "ws": "^8.18.2",
+    "midnight-contracts": "git+https://riusricardo@github.com/riusricardo/midnight-contracts"
   },
   "devDependencies": {
     "@midnight-ntwrk/midnight-js-node-zk-config-provider": "*",
